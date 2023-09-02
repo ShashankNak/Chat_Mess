@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "925868647816",
+    "project_id": "chatmess-86f37",
+    "storage_bucket": "chatmess-86f37.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:925868647816:android:c90b02cf78243334afc63d",
+        "android_client_info": {
+          "package_name": "com.example.chat_mess"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "925868647816-vlc2451jdhohlkjc6jbjlb1po1mqgoum.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfrrFoP5pgocp9HxhNsNBS69hs8G0-VLY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "925868647816-vlc2451jdhohlkjc6jbjlb1po1mqgoum.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
