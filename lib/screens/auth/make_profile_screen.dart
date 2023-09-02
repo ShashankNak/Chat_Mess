@@ -186,7 +186,7 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
               .collection('userdata')
               .doc(Api.auth.currentUser!.uid)
               .set(chatUser.toMap())
-              .then((value) {
+              .then((value) async {
             setState(() {
               _isloading = false;
             });

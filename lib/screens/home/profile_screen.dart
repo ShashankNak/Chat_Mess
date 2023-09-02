@@ -94,6 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .doc(Api.auth.currentUser!.uid)
             .update({"image": img});
         takeIntialData();
+        await Api.auth.currentUser!.updatePhotoURL(img);
       });
       setState(() {
         _isLoadingImg = false;

@@ -1,6 +1,5 @@
 import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/screens/chats/one_to_one_chat.dart';
-import 'package:chat_mess/screens/home/others_profile.dart';
 import 'package:chat_mess/widgets/show_profile_dialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

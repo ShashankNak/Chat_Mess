@@ -51,7 +51,6 @@ class AuthProvider extends StateNotifier<AuthState> {
           log(error.message.toString());
           Navigator.of(context).pop();
         },
-        //
         codeSent: (verificationId, forceResendingToken) {
           state.isLoading = false;
           Navigator.of(context).push(
