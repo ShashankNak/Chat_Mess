@@ -1,7 +1,6 @@
 import 'package:chat_mess/apis/api.dart';
 import 'package:chat_mess/screens/auth/start_screen.dart';
 import 'package:chat_mess/screens/chats/group_chat.dart';
-import 'package:chat_mess/screens/chats/search_chat.dart';
 import 'package:chat_mess/screens/chats/user_chat.dart';
 import 'package:chat_mess/screens/contacts/search_contacts.dart';
 import 'package:chat_mess/screens/home/profile_screen.dart';
