@@ -40,6 +40,13 @@ buildSticker(
   );
 }
 
+DateTime dateTimeGetter(String time) {
+  double epochTime = double.parse(time);
+  final dataTime =
+      DateTime.fromMillisecondsSinceEpoch((epochTime * 1000).toInt());
+  return dataTime;
+}
+
 buildButton(
     {required Size size,
     required Color color1,

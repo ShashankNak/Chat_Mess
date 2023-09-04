@@ -13,6 +13,7 @@ class OneToOneChat extends StatefulWidget {
 }
 
 class _OneToOneChatState extends State<OneToOneChat> {
+  final TextEditingController _messageController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -74,6 +75,7 @@ class _OneToOneChatState extends State<OneToOneChat> {
           children: [
             Expanded(
               child: StreamBuilder(
+                stream: null,
                 builder: (context, snapshot) {
                   return Center(
                     child: Text(
@@ -84,7 +86,6 @@ class _OneToOneChatState extends State<OneToOneChat> {
                     ),
                   );
                 },
-                stream: null,
               ),
             ),
             messageInput(isDark, size),
@@ -122,6 +123,8 @@ class _OneToOneChatState extends State<OneToOneChat> {
                   ),
                   Expanded(
                     child: TextField(
+                      controller: _messageController,
+                      cursorColor: isDark ? Colors.white : Colors.black,
                       autocorrect: false,
                       minLines: 1,
                       maxLines: 4,

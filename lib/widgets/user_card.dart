@@ -1,5 +1,6 @@
 import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/screens/chats/one_to_one_chat.dart';
+import 'package:chat_mess/widgets/consts.dart';
 import 'package:chat_mess/widgets/show_profile_dialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,10 @@ class UserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+
+    final date = dateTimeGetter(user.lastActive);
+    String time =
+        "${date.day.toString()}/${date.month.toString()}/${date.year - 53608}  ${date.hour.toString()}:${date.minute.toString()}";
     return Column(
       children: [
         InkWell(
@@ -41,7 +46,7 @@ class UserCard extends StatelessWidget {
                   ),
             ),
             trailing: Text(
-              user.lastActive,
+              time,
               style: Theme.of(context).textTheme.labelMedium!.copyWith(
                     color: Theme.of(context).colorScheme.onBackground,
                     fontSize: size.height / 60,
