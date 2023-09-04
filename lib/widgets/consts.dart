@@ -50,7 +50,7 @@ buildButton(
     style: ElevatedButton.styleFrom(
       backgroundColor: color1,
       fixedSize: Size(size.width / 1.3, size.height / 15),
-      elevation: 20,
+      elevation: 5,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(
           Radius.circular(size.height / 8),

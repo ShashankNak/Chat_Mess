@@ -413,6 +413,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(
           "Your Profile",
           style: Theme.of(context).textTheme.bodyLarge!.copyWith(
@@ -444,12 +445,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             borderRadius:
                                 BorderRadius.circular(size.height / 7),
                             child: _image == null
-                                ? Image.network(
-                                    user.image,
-                                    height: size.height / 4,
-                                    width: size.height / 4,
-                                    fit: BoxFit.cover,
-                                  )
+                                ? user.image == ""
+                                    ? Image.asset(
+                                        profile2,
+                                        height: size.height / 4,
+                                        width: size.height / 4,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.network(
+                                        user.image,
+                                        height: size.height / 4,
+                                        width: size.height / 4,
+                                        fit: BoxFit.cover,
+                                      )
                                 : Image.file(
                                     File(_image!),
                                     height: size.height / 4,

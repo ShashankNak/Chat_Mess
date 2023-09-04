@@ -43,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen>
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.background,
         appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.primary,
           leading: Image.asset(
             chatIcon,
             fit: BoxFit.cover,
@@ -137,7 +138,9 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         floatingActionButton: FloatingActionButton(
           splashColor: Theme.of(context).colorScheme.primary,
-          elevation: 10,
+          backgroundColor:
+              isDark ? Colors.white : Theme.of(context).colorScheme.primary,
+          elevation: 3,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(size.width / 30),

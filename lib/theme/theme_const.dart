@@ -5,9 +5,9 @@ ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   textTheme: GoogleFonts.comfortaaTextTheme(),
   colorScheme: ColorScheme.light(
-    background: Colors.blue.shade200,
+    background: Colors.greenAccent.shade100,
     onBackground: Colors.black,
-    primary: Colors.blue.shade400,
+    primary: Colors.green,
     onPrimary: Colors.black,
     secondary: Colors.white,
     onSecondary: Colors.black,
@@ -20,13 +20,14 @@ ThemeData darkTheme = ThemeData(
   textTheme: GoogleFonts.comfortaaTextTheme(),
   brightness: Brightness.dark,
   colorScheme: const ColorScheme.dark(
-    background: Colors.black,
+    background: Color.fromARGB(255, 2, 26, 47),
     onBackground: Colors.white,
-    primary: Color.fromARGB(255, 35, 35, 35),
+    primary: Color.fromARGB(255, 8, 20, 31),
     onPrimary: Colors.white,
     secondary: Colors.white,
     onSecondary: Colors.black,
     secondaryContainer: Color.fromARGB(255, 22, 21, 21),
     onPrimaryContainer: Colors.white60,
+    tertiary: Color.fromARGB(255, 21, 51, 79),
   ),
 );

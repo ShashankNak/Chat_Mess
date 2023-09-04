@@ -1,8 +1,6 @@
-import 'package:chat_mess/apis/api.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/screens/home/others_profile.dart';
 import 'package:chat_mess/widgets/consts.dart';
-import 'package:chat_mess/widgets/message_bubble.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
 
@@ -20,16 +18,16 @@ class _OneToOneChatState extends State<OneToOneChat> {
     final size = MediaQuery.of(context).size;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
-    return Scaffold(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
         backgroundColor: isDark
-            ? Theme.of(context)
-                .colorScheme
-                .background
-                .withGreen(30)
-                .withBlue(30)
-                .withRed(30)
+            ? Theme.of(context).colorScheme.primary
             : Theme.of(context).colorScheme.background,
         appBar: AppBar(
+          backgroundColor: isDark
+              ? Theme.of(context).colorScheme.background
+              : Theme.of(context).colorScheme.primary,
           title: GestureDetector(
             onTap: () {
               Navigator.of(context).push(PageTransition(
@@ -71,41 +69,123 @@ class _OneToOneChatState extends State<OneToOneChat> {
             ),
           ),
         ),
-        body: ListView(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            MessageBubble.first(
-              message: "kajsdf",
-              isMe: false,
-              isSeen: false,
-              time: "9:00",
-              userImage: widget.user.image,
-              username: Api.auth.currentUser!.displayName,
-              isMsgSend: true,
+            Expanded(
+              child: StreamBuilder(
+                builder: (context, snapshot) {
+                  return Center(
+                    child: Text(
+                      "No chats Yet",
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontSize: size.width / 15),
+                    ),
+                  );
+                },
+                stream: null,
+              ),
             ),
-            const MessageBubble.next(
-              message: "hii there",
-              isMe: false,
-              isSeen: false,
-              time: "9:00",
-              isMsgSend: true,
-            ),
-            MessageBubble.first(
-              message: "hii there",
-              isMe: true,
-              isSeen: true,
-              time: "9:00",
-              userImage: widget.user.image,
-              username: Api.auth.currentUser!.displayName,
-              isMsgSend: true,
-            ),
-            const MessageBubble.next(
-              message: "hii asdfasdfasdfasdfasdfthere",
-              isMe: true,
-              isSeen: false,
-              time: "9:00",
-              isMsgSend: false,
-            ),
+            messageInput(isDark, size),
           ],
-        ));
+        ),
+      ),
+    );
+  }
+
+  Widget messageInput(bool isDark, Size size) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        vertical: size.height / 50,
+        horizontal: size.width / 40,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Card(
+              color: Theme.of(context).colorScheme.tertiary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(size.width / 15),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: size.width / 90,
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.emoji_emotions,
+                      size: size.width / 14,
+                    ),
+                  ),
+                  Expanded(
+                    child: TextField(
+                      autocorrect: false,
+                      minLines: 1,
+                      maxLines: 4,
+                      keyboardType: TextInputType.multiline,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          fontSize: size.height / 50,
+                          color: Theme.of(context).colorScheme.onBackground),
+                      decoration: InputDecoration(
+                        label: Text(
+                          "Type Here...",
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelLarge!
+                              .copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground),
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.image,
+                      size: size.width / 14,
+                    ),
+                  ),
+                  SizedBox(
+                    width: size.width / 90,
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.camera_alt_rounded,
+                      size: size.width / 14,
+                    ),
+                  ),
+                  SizedBox(
+                    width: size.width / 90,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(
+            width: size.width / 90,
+          ),
+          MaterialButton(
+            color: isDark
+                ? Theme.of(context).colorScheme.tertiary
+                : Theme.of(context).colorScheme.secondary,
+            padding: const EdgeInsets.all(10),
+            shape: const CircleBorder(),
+            onPressed: () {},
+            minWidth: 0,
+            child: Icon(
+              Icons.send,
+              size: size.width / 12,
+            ),
+          )
+        ],
+      ),
+    );
   }
 }

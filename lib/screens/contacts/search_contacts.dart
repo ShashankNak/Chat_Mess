@@ -80,92 +80,96 @@ class _SearchContactsScreenState extends State<SearchContactsScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            if (!isLoading) {
-              Navigator.of(context).pop();
-            }
-          },
-          icon: const Icon(Icons.arrow_back),
-        ),
-        title: Text(
-          "Select Contacts",
-          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                fontSize: size.height / 40,
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-        ),
-        actions: [
-          if (isLoading)
-            Container(
-              margin: EdgeInsets.only(right: size.width / 70),
-              padding: EdgeInsets.all(size.width / 30),
-              width: size.width / 8,
-              child: CircularProgressIndicator(
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-            )
-        ],
-      ),
-      body: StreamBuilder(
-        stream: Api.firestore.collection('userdata').snapshots(),
-        builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-            case ConnectionState.none:
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            case ConnectionState.active:
-            case ConnectionState.done:
-              userDataList = [];
-              if (snapshot.data == null) {
-                return Center(
-                  child: Text(
-                    "No users in contacts. Share the App",
-                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                          color: Theme.of(context).colorScheme.onBackground,
-                        ),
-                  ),
-                );
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.background,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          leading: IconButton(
+            onPressed: () {
+              if (!isLoading) {
+                Navigator.of(context).pop();
               }
-              final data = snapshot.data!.docs;
-              userList = data.map((e) => ChatUser.fromMap(e.data())).toList();
-              for (Contact contact in contacts) {
-                for (ChatUser chatUser in userList) {
-                  String phone =
-                      convertNumber(contact.phones![0].value.toString());
-                  if (chatUser.phoneNumber.contains(phone)) {
-                    userDataList.add(chatUser);
+            },
+            icon: const Icon(Icons.arrow_back),
+          ),
+          title: Text(
+            "Select Contacts",
+            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                  fontSize: size.height / 40,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+          ),
+          actions: [
+            if (isLoading)
+              Container(
+                margin: EdgeInsets.only(right: size.width / 70),
+                padding: EdgeInsets.all(size.width / 30),
+                width: size.width / 8,
+                child: CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              )
+          ],
+        ),
+        body: StreamBuilder(
+          stream: Api.firestore.collection('userdata').snapshots(),
+          builder: (context, snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.waiting:
+              case ConnectionState.none:
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              case ConnectionState.active:
+              case ConnectionState.done:
+                userDataList = [];
+                if (snapshot.data == null) {
+                  return Center(
+                    child: Text(
+                      "No users in contacts. Share the App",
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            color: Theme.of(context).colorScheme.onBackground,
+                          ),
+                    ),
+                  );
+                }
+                final data = snapshot.data!.docs;
+                userList = data.map((e) => ChatUser.fromMap(e.data())).toList();
+                for (Contact contact in contacts) {
+                  for (ChatUser chatUser in userList) {
+                    String phone =
+                        convertNumber(contact.phones![0].value.toString());
+                    if (chatUser.phoneNumber.contains(phone)) {
+                      userDataList.add(chatUser);
+                    }
                   }
                 }
-              }
 
-              if (userDataList.isEmpty) {
-                return Center(
-                  child: Text(
-                    "No users in contacts. Share the App",
-                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                          color: Theme.of(context).colorScheme.onBackground,
-                        ),
-                  ),
+                if (userDataList.isEmpty) {
+                  return Center(
+                    child: Text(
+                      "No users in contacts. Share the App",
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            color: Theme.of(context).colorScheme.onBackground,
+                          ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: EdgeInsets.only(top: size.height / 50),
+                  itemCount: userDataList.length,
+                  itemBuilder: (context, index) {
+                    return UserCardContacts(
+                        user: userDataList[index],
+                        addUser: isLoading ? (user) {} : addUser);
+                  },
                 );
-              }
-
-              return ListView.builder(
-                padding: EdgeInsets.only(top: size.height / 50),
-                itemCount: userDataList.length,
-                itemBuilder: (context, index) {
-                  return UserCardContacts(
-                      user: userDataList[index],
-                      addUser: isLoading ? (user) {} : addUser);
-                },
-              );
-          }
-        },
+            }
+          },
+        ),
       ),
     );
   }
