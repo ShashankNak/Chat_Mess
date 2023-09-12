@@ -1,3 +1,4 @@
+import 'package:chat_mess/apis/api.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -41,10 +42,41 @@ buildSticker(
 }
 
 DateTime dateTimeGetter(String time) {
-  double epochTime = double.parse(time);
-  final dataTime =
-      DateTime.fromMillisecondsSinceEpoch((epochTime * 1000).toInt());
-  return dataTime;
+  final date = DateTime.fromMillisecondsSinceEpoch(int.parse(time));
+  // final now = DateTime.now();
+
+  // if(now.day==date.day && now.month==date.month&&now.year==now.year){}
+  return date;
+}
+
+String getMonth(DateTime data) {
+  switch (data.month) {
+    case 1:
+      return 'Jan';
+    case 2:
+      return 'Feb';
+    case 3:
+      return 'Mar';
+    case 4:
+      return 'Apr';
+    case 5:
+      return 'May';
+    case 6:
+      return 'Jun';
+    case 7:
+      return 'Jul';
+    case 8:
+      return 'Aug';
+    case 9:
+      return 'Sep';
+    case 10:
+      return 'Oct';
+    case 11:
+      return 'Nov';
+    case 12:
+      return 'Dec';
+  }
+  return "NA";
 }
 
 buildButton(
@@ -77,4 +109,11 @@ String convertNumber(String n) {
     }
   }
   return number;
+}
+
+String getConversationId(String id) {
+  final uid = Api.auth.currentUser!.uid;
+  return uid.hashCode <= id.toString().hashCode
+      ? '${uid.toString()}_${id.toString()}'
+      : '${id.toString()}_${uid.toString()}';
 }

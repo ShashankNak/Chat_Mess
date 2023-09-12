@@ -13,6 +13,7 @@ ThemeData lightTheme = ThemeData(
     onSecondary: Colors.black,
     secondaryContainer: Colors.white,
     onPrimaryContainer: const Color.fromARGB(210, 0, 0, 0),
+    tertiary: const Color.fromARGB(255, 17, 86, 19),
   ),
 );
 

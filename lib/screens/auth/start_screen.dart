@@ -21,6 +21,7 @@ class _StartScreenState extends State<StartScreen> {
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
                 height: size.height / 10,

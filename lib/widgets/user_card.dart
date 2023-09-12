@@ -13,9 +13,8 @@ class UserCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    final date = dateTimeGetter(user.lastActive);
-    String time =
-        "${date.day.toString()}/${date.month.toString()}/${date.year - 53608}  ${date.hour.toString()}:${date.minute.toString()}";
+    final time =
+        TimeOfDay.fromDateTime(dateTimeGetter(user.lastActive)).format(context);
     return Column(
       children: [
         InkWell(
@@ -73,6 +72,14 @@ class UserCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(size.height / 7),
                         child: Image.network(
                           width: size.height / 10,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              profile2,
+                              height: size.height / 4,
+                              width: size.height / 4,
+                              fit: BoxFit.cover,
+                            );
+                          },
                           alignment: Alignment.center,
                           user.image,
                           fit: BoxFit.cover,

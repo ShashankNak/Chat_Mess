@@ -1,8 +1,12 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:chat_mess/apis/api.dart';
+import 'package:chat_mess/models/chat_msg_model.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
-import 'package:chat_mess/screens/home/others_profile.dart';
-import 'package:chat_mess/widgets/consts.dart';
+import 'package:chat_mess/widgets/message_card.dart';
+import 'package:chat_mess/widgets/online_status_update.dart';
 import 'package:flutter/material.dart';
-import 'package:page_transition/page_transition.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 
 class OneToOneChat extends StatefulWidget {
   const OneToOneChat({super.key, required this.user});
@@ -14,98 +18,160 @@ class OneToOneChat extends StatefulWidget {
 
 class _OneToOneChatState extends State<OneToOneChat> {
   final TextEditingController _messageController = TextEditingController();
+  bool _showEmoji = false;
+  List<MessageModel> _message = [];
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    Api.updateMessageReadStatus(widget.user.uid);
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: isDark
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.background,
-        appBar: AppBar(
-          backgroundColor: isDark
-              ? Theme.of(context).colorScheme.background
-              : Theme.of(context).colorScheme.primary,
-          title: GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(PageTransition(
-                  duration: const Duration(milliseconds: 150),
-                  child: OtherProfileScreen(user: widget.user),
-                  type: PageTransitionType.rightToLeftWithFade));
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
+    return SafeArea(
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: WillPopScope(
+          onWillPop: () {
+            if (_showEmoji) {
+              setState(() {
+                _showEmoji = !_showEmoji;
+              });
+              return Future.value(false);
+            }
+            return Future.value(true);
+          },
+          child: Scaffold(
+            resizeToAvoidBottomInset: true,
+            backgroundColor: isDark
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.background,
+            appBar: AppBar(
+              leading: null,
+              backgroundColor: isDark
+                  ? Theme.of(context).colorScheme.background
+                  : Theme.of(context).colorScheme.primary,
+              title: OnlineStatusUpdate(user: widget.user),
+            ),
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(size.height / 7),
-                  child: widget.user.image == ""
-                      ? Image.asset(
-                          profile2,
-                          height: size.height / 25,
-                          width: size.height / 25,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.network(
-                          widget.user.image,
-                          height: size.height / 25,
-                          width: size.height / 25,
-                          fit: BoxFit.cover,
-                        ),
+                Expanded(
+                  child: StreamBuilder(
+                    stream: Api.getAllMessages(widget.user),
+                    builder: (context, snapshot) {
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                        case ConnectionState.none:
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        case ConnectionState.active:
+                        case ConnectionState.done:
+                          final data = snapshot.data!.docs;
+                          _message = data
+                              .map((e) => MessageModel.fromJson(e.data()))
+                              .toList();
+
+                          if (_message.isNotEmpty) {
+                            Api.updateMessageReadStatus(widget.user.uid);
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _scrollController.jumpTo(
+                                  _scrollController.position.maxScrollExtent);
+                            });
+                            return ListView.builder(
+                              controller: _scrollController,
+                              itemCount: _message.length,
+                              itemBuilder: (context, index) {
+                                return MessageCard(msg: _message[index]);
+                              },
+                            );
+                          }
+
+                          return Center(
+                            child: Text(
+                              "No chats Yet",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge!
+                                  .copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
+                                      fontSize: size.width / 15),
+                            ),
+                          );
+                      }
+                    },
+                  ),
                 ),
-                SizedBox(
-                  width: size.width / 30,
-                ),
-                Text(
-                  widget.user.name,
-                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontSize: size.width / 15),
-                ),
+                messageInput(isDark, size),
+                if (_showEmoji) showEmoji(isDark, size),
               ],
             ),
           ),
-        ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: StreamBuilder(
-                stream: null,
-                builder: (context, snapshot) {
-                  return Center(
-                    child: Text(
-                      "No chats Yet",
-                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontSize: size.width / 15),
-                    ),
-                  );
-                },
-              ),
-            ),
-            messageInput(isDark, size),
-          ],
         ),
       ),
     );
   }
 
+  Widget showEmoji(bool isDark, Size size) {
+    return SizedBox(
+        height: size.height / 2.5,
+        child: EmojiPicker(
+          textEditingController: _messageController,
+          // onBackspacePressed: _onBackspacePressed,
+          config: Config(
+            columns: 7,
+            emojiSizeMax: 32 * (Platform.isIOS ? 1.30 : 1.0),
+            verticalSpacing: 0,
+            horizontalSpacing: 0,
+            gridPadding: EdgeInsets.zero,
+            initCategory: Category.RECENT,
+            bgColor: Theme.of(context).colorScheme.background,
+            indicatorColor:
+                isDark ? Colors.white : Theme.of(context).colorScheme.tertiary,
+            iconColor: Colors.grey,
+            iconColorSelected:
+                isDark ? Colors.white : Theme.of(context).colorScheme.tertiary,
+            skinToneDialogBgColor: Colors.white,
+            skinToneIndicatorColor: Colors.grey,
+            enableSkinTones: true,
+            recentTabBehavior: RecentTabBehavior.RECENT,
+            recentsLimit: 28,
+            replaceEmojiOnLimitExceed: false,
+            noRecents: const Text(
+              'No Recents',
+              style: TextStyle(fontSize: 20, color: Colors.black26),
+              textAlign: TextAlign.center,
+            ),
+            loadingIndicator: const SizedBox.shrink(),
+            tabIndicatorAnimDuration: kTabScrollDuration,
+            categoryIcons: const CategoryIcons(),
+            buttonMode: ButtonMode.MATERIAL,
+            checkPlatformCompatibility: true,
+          ),
+        ));
+  }
+
   Widget messageInput(bool isDark, Size size) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        vertical: size.height / 50,
+        vertical: size.height / 90,
         horizontal: size.width / 40,
       ),
       child: Row(
         children: [
           Expanded(
             child: Card(
-              color: Theme.of(context).colorScheme.tertiary,
+              color: isDark
+                  ? Theme.of(context).colorScheme.tertiary
+                  : Theme.of(context).colorScheme.secondary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(size.width / 15),
               ),
@@ -115,7 +181,16 @@ class _OneToOneChatState extends State<OneToOneChat> {
                     width: size.width / 90,
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      Future.delayed(
+                        const Duration(milliseconds: 300),
+                      ).then((value) {
+                        setState(() {
+                          _showEmoji = !_showEmoji;
+                        });
+                      });
+                    },
                     icon: Icon(
                       Icons.emoji_emotions,
                       size: size.width / 14,
@@ -124,6 +199,15 @@ class _OneToOneChatState extends State<OneToOneChat> {
                   Expanded(
                     child: TextField(
                       controller: _messageController,
+                      onSubmitted: (value) =>
+                          Api.sendMessage(widget.user, _messageController.text),
+                      onTap: () {
+                        if (_showEmoji) {
+                          setState(() {
+                            _showEmoji = false;
+                          });
+                        }
+                      },
                       cursorColor: isDark ? Colors.white : Colors.black,
                       autocorrect: false,
                       minLines: 1,
@@ -180,7 +264,10 @@ class _OneToOneChatState extends State<OneToOneChat> {
                 : Theme.of(context).colorScheme.secondary,
             padding: const EdgeInsets.all(10),
             shape: const CircleBorder(),
-            onPressed: () {},
+            onPressed: () {
+              Api.sendMessage(widget.user, _messageController.text);
+              _messageController.clear();
+            },
             minWidth: 0,
             child: Icon(
               Icons.send,

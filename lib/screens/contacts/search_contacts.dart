@@ -53,7 +53,9 @@ class _SearchContactsScreenState extends State<SearchContactsScreen> {
         .collection('users')
         .doc(Api.auth.currentUser!.uid)
         .get();
+    final value2 = await Api.firestore.collection('users').doc(user.uid).get();
     list = UserModel.fromMap(value.data()!).usersList;
+    final list2 = UserModel.fromMap(value2.data()!).usersList;
     if (list.contains(user.uid)) {
       // ignore: use_build_context_synchronously
       showSnackBar(context, "User Already Added!");
@@ -65,11 +67,16 @@ class _SearchContactsScreenState extends State<SearchContactsScreen> {
     }
 
     list.add(user.uid);
+    list2.add(Api.auth.currentUser!.uid);
 
     await Api.firestore
         .collection('users')
         .doc(Api.auth.currentUser!.uid)
         .update({'usersList': list});
+    await Api.firestore
+        .collection('users')
+        .doc(user.uid)
+        .update({'usersList': list2});
     // ignore: use_build_context_synchronously
     showSnackBar(context, "User Added! You can Chat with ${user.name}");
     setState(() {

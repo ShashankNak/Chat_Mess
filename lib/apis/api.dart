@@ -1,4 +1,7 @@
+import 'dart:developer';
+import 'package:chat_mess/models/chat_msg_model.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
+import 'package:chat_mess/widgets/consts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -25,5 +28,57 @@ class Api {
     });
   }
 
-  static Future<void> getUserList() async {}
+  // static Future<void> getUserList() async {}
+
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getAllMessages(
+      ChatUser user) {
+    return firestore
+        .collection('chats/${getConversationId(user.uid)}/messages/')
+        .snapshots();
+  }
+
+  static Future<void> sendMessage(ChatUser user, String msg) async {
+    final time = DateTime.now().millisecondsSinceEpoch.toString();
+    final id = getConversationId(user.uid);
+
+    final message = MessageModel(
+        text: msg,
+        toId: user.uid,
+        fromId: auth.currentUser!.uid,
+        chatId: id,
+        sentTime: time,
+        deleteForEvery: false,
+        deleteForMe: false,
+        read: "");
+    final ref =
+        firestore.collection('chats/${getConversationId(user.uid)}/messages/');
+
+    await ref.doc(time).set(message.toJson());
+  }
+
+  static Future<void> updateMessageReadStatus(String uid) async {
+    final snapshot = await firestore
+        .collection('chats/${getConversationId(uid)}/messages/')
+        .get();
+
+    if (snapshot.docs.isEmpty) {
+      log("empty");
+      return;
+    }
+    final data =
+        snapshot.docs.map((e) => MessageModel.fromJson(e.data())).toList();
+    final now = DateTime.now().millisecondsSinceEpoch.toString();
+
+    for (MessageModel m in data) {
+      if (m.read.isEmpty && m.fromId != me.uid) {
+        m.read = now;
+        log("updating.....");
+        log(m.read);
+        await firestore
+            .collection('chats/${getConversationId(uid)}/messages/')
+            .doc(m.sentTime)
+            .update(m.toJson());
+      }
+    }
+  }
 }

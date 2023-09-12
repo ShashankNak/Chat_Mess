@@ -1,10 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
-
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:chat_mess/apis/api.dart';
-import 'package:chat_mess/models/chat_user_model.dart';
+// import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -25,35 +23,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoadingImg = false;
   bool _isLoadingname = false;
   bool _isLoadingabout = false;
-  bool _isLoading = false;
-  late ChatUser user;
   final _formkey = GlobalKey<FormState>();
   int counter = 0;
   String? _image;
 
-  void takeIntialData() async {
-    setState(() {
-      _isLoading = true;
-    });
-    final data = await Api.firestore
-        .collection("userdata")
-        .doc(Api.auth.currentUser!.uid)
-        .get();
-    if (data.data() == null) {
-      showSnackBar(context, "Something went wrong");
-      Navigator.of(context).pop();
-      return;
-    }
-    setState(() {
-      user = ChatUser.fromMap(data.data()!);
-      _isLoading = false;
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    takeIntialData();
   }
 
   void testCompressAndGetFile(String path, String targetPath) async {
@@ -93,7 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .collection('userdata')
             .doc(Api.auth.currentUser!.uid)
             .update({"image": img});
-        takeIntialData();
+        Api.getSelfInfo();
         await Api.auth.currentUser!.updatePhotoURL(img);
       });
       setState(() {
@@ -145,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .update({"name": _nameController.text}).then((value) {
           _nameController.text = "";
           Navigator.of(context).pop();
-          takeIntialData();
+          Api.getSelfInfo();
           setState(() {
             _isLoadingname = false;
           });
@@ -161,8 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .update({"about": _aboutController.text}).then((value) {
           _aboutController.text = "";
           Navigator.of(context).pop();
-          takeIntialData();
-
+          Api.getSelfInfo();
           setState(() {
             _isLoadingabout = false;
           });
@@ -422,170 +397,156 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
         ),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              child: SingleChildScrollView(
-                child: Container(
-                  height: size.height,
-                  width: size.width,
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        height: size.height / 20,
-                      ),
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius:
-                                BorderRadius.circular(size.height / 7),
-                            child: _image == null
-                                ? user.image == ""
-                                    ? Image.asset(
-                                        profile2,
-                                        height: size.height / 4,
-                                        width: size.height / 4,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Image.network(
-                                        user.image,
-                                        height: size.height / 4,
-                                        width: size.height / 4,
-                                        fit: BoxFit.cover,
-                                      )
-                                : Image.file(
-                                    File(_image!),
-                                    height: size.height / 4,
-                                    width: size.height / 4,
-                                    fit: BoxFit.cover,
-                                  ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: size.height / 15,
-                              height: size.height / 15,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(100),
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onPrimary
-                                      .withOpacity(0.6)),
-                              child: _isLoadingImg
-                                  ? const Center(
-                                      child: CircularProgressIndicator(),
-                                    )
-                                  : IconButton(
-                                      icon: Icon(
-                                        Icons.edit,
-                                        size: size.height / 30,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSecondary,
-                                      ),
-                                      onPressed: () {
-                                        showBottomSheetForImage(size);
-                                      },
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: size.height / 40,
-                      ),
-                      Divider(thickness: size.height / 400),
-                      SizedBox(
-                        height: size.height / 70,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Icon(Icons.person, size: size.width / 10),
-                          SizedBox(
-                            width: size.width / 20,
-                          ),
-                          Expanded(
-                              child: Text(
-                            user.name,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyLarge!
-                                .copyWith(
-                                  fontSize: size.height / 30,
-                                  color:
-                                      Theme.of(context).colorScheme.onPrimary,
-                                ),
-                          )),
-                          _isLoadingname
-                              ? const CircularProgressIndicator()
-                              : IconButton(
-                                  onPressed: () {
-                                    showBottomSheetForEdit(
-                                        size, "Name", _nameController);
-                                  },
-                                  icon: const Icon(Icons.edit)),
-                        ],
-                      ),
-                      SizedBox(
-                        height: size.height / 70,
-                      ),
-                      SizedBox(
-                        height: size.height / 70,
-                      ),
-                      Divider(thickness: size.height / 400),
-                      SizedBox(
-                        height: size.height / 70,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(Icons.info_outline, size: size.width / 10),
-                          SizedBox(
-                            width: size.width / 20,
-                          ),
-                          Expanded(
-                              child: Text(
-                            user.about,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyLarge!
-                                .copyWith(
-                                  fontSize: size.height / 30,
-                                  color:
-                                      Theme.of(context).colorScheme.onPrimary,
-                                ),
-                          )),
-                          _isLoadingabout
-                              ? const CircularProgressIndicator()
-                              : IconButton(
-                                  onPressed: () {
-                                    showBottomSheetForEdit(
-                                        size, "About", _aboutController);
-                                  },
-                                  icon: const Icon(Icons.edit)),
-                        ],
-                      ),
-                      SizedBox(
-                        height: size.height / 70,
-                      ),
-                      Divider(thickness: size.height / 400),
-                      SizedBox(
-                        height: size.height / 30,
-                      ),
-                    ],
-                  ),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
+          child: Container(
+            height: size.height,
+            width: size.width,
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: size.height / 20,
                 ),
-              ),
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(size.height / 7),
+                      child: _image == null
+                          ? Api.me.image == ""
+                              ? Image.asset(
+                                  profile2,
+                                  height: size.height / 4,
+                                  width: size.height / 4,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.network(
+                                  Api.me.image,
+                                  height: size.height / 4,
+                                  width: size.height / 4,
+                                  fit: BoxFit.cover,
+                                )
+                          : Image.file(
+                              File(_image!),
+                              height: size.height / 4,
+                              width: size.height / 4,
+                              fit: BoxFit.cover,
+                            ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        width: size.height / 15,
+                        height: size.height / 15,
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(100),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimary
+                                .withOpacity(0.6)),
+                        child: _isLoadingImg
+                            ? const Center(
+                                child: CircularProgressIndicator(),
+                              )
+                            : IconButton(
+                                icon: Icon(
+                                  Icons.edit,
+                                  size: size.height / 30,
+                                  color:
+                                      Theme.of(context).colorScheme.onSecondary,
+                                ),
+                                onPressed: () {
+                                  showBottomSheetForImage(size);
+                                },
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: size.height / 40,
+                ),
+                Divider(thickness: size.height / 400),
+                SizedBox(
+                  height: size.height / 70,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Icon(Icons.person, size: size.width / 10),
+                    SizedBox(
+                      width: size.width / 20,
+                    ),
+                    Expanded(
+                        child: Text(
+                      Api.me.name,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            fontSize: size.height / 30,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                    )),
+                    _isLoadingname
+                        ? const CircularProgressIndicator()
+                        : IconButton(
+                            onPressed: () {
+                              showBottomSheetForEdit(
+                                  size, "Name", _nameController);
+                            },
+                            icon: const Icon(Icons.edit)),
+                  ],
+                ),
+                SizedBox(
+                  height: size.height / 70,
+                ),
+                SizedBox(
+                  height: size.height / 70,
+                ),
+                Divider(thickness: size.height / 400),
+                SizedBox(
+                  height: size.height / 70,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(Icons.info_outline, size: size.width / 10),
+                    SizedBox(
+                      width: size.width / 20,
+                    ),
+                    Expanded(
+                        child: Text(
+                      Api.me.about,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            fontSize: size.height / 30,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                    )),
+                    _isLoadingabout
+                        ? const CircularProgressIndicator()
+                        : IconButton(
+                            onPressed: () {
+                              showBottomSheetForEdit(
+                                  size, "About", _aboutController);
+                            },
+                            icon: const Icon(Icons.edit)),
+                  ],
+                ),
+                SizedBox(
+                  height: size.height / 70,
+                ),
+                Divider(thickness: size.height / 400),
+                SizedBox(
+                  height: size.height / 30,
+                ),
+              ],
             ),
+          ),
+        ),
+      ),
     );
   }
 }

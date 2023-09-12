@@ -444,6 +444,8 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
                       ),
                       Expanded(
                         child: TextField(
+                          minLines: 1,
+                          maxLines: 4,
                           controller: about,
                           onEditingComplete: () {
                             FocusScope.of(context).nextFocus();

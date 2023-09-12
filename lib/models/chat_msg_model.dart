@@ -1,50 +1,46 @@
-class ChatMessage {
+class MessageModel {
   late String text;
-  late String senderId;
-  late String senderName;
-  late String senderImage;
+  late String toId;
+  late String fromId;
   late String chatId;
-  late String time;
+  late String sentTime;
   late bool deleteForMe;
   late bool deleteForEvery;
-  late bool isSeen;
+  late String read;
 
-  ChatMessage({
+  MessageModel({
     required this.text,
-    required this.senderId,
-    required this.senderName,
-    required this.senderImage,
+    required this.toId,
+    required this.fromId,
     required this.chatId,
-    required this.time,
+    required this.sentTime,
     required this.deleteForEvery,
     required this.deleteForMe,
-    required this.isSeen,
+    required this.read,
   });
-  factory ChatMessage.fromMap(Map<String, dynamic> map) {
-    return ChatMessage(
+  factory MessageModel.fromJson(Map<String, dynamic> map) {
+    return MessageModel(
       text: map['text'] ?? '',
-      senderId: map['senderId'] ?? '',
-      senderName: map['senderName'] ?? '',
-      senderImage: map['senderImage'] ?? '',
+      toId: map['toId'] ?? '',
+      fromId: map['fromId'] ?? '',
       chatId: map['chatId'] ?? '',
       deleteForEvery: map['deleteForEvery'] ?? false,
       deleteForMe: map['deleteForMe'] ?? false,
-      isSeen: map['isSeen'] ?? false,
-      time: map['time'] ?? '',
+      read: map['read'] ?? false,
+      sentTime: map['sentTime'] ?? '',
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'text': text,
-      'senderId': senderId,
-      'senderName': senderName,
-      'senderImage': senderImage,
+      'toId': toId,
+      'fromId': fromId,
       'chatId': chatId,
       'deleteForMe': deleteForMe,
       'deleteForEvery': deleteForEvery,
-      'isSeen': isSeen,
-      'time': time,
+      'read': read,
+      'sentTime': sentTime,
     };
   }
 }
