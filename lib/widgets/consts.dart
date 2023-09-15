@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:chat_mess/apis/api.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -41,12 +43,57 @@ buildSticker(
   );
 }
 
-DateTime dateTimeGetter(String time) {
+String timeGetter(String time, BuildContext context) {
   final date = DateTime.fromMillisecondsSinceEpoch(int.parse(time));
-  // final now = DateTime.now();
+  final dayTime = TimeOfDay.fromDateTime(date).format(context);
+  return dayTime;
+}
 
-  // if(now.day==date.day && now.month==date.month&&now.year==now.year){}
-  return date;
+String getLastActiveTime(
+    {required BuildContext context, required String lastActive}) {
+  final i = int.tryParse(lastActive) ?? -1;
+  if (i == -1) {
+    return "Last Active Time Not Available";
+  }
+
+  final time = DateTime.fromMillisecondsSinceEpoch(i);
+  log(time.toString());
+  final now = DateTime.now();
+
+  final formattedTime = TimeOfDay.fromDateTime(time).format(context);
+  if (now.day == time.day && now.month == time.month && now.year == time.year) {
+    return "Last Seen today at $formattedTime";
+  }
+
+  if ((now.difference(time).inHours / 24).round() == 1) {
+    return "Last Seen Yesterday at $formattedTime";
+  }
+
+  if (now.year - time.year > 1) {
+    return "Last seen on ${time.day} ${getMonth(time)},${time.year} on $formattedTime";
+  }
+
+  return "Last seen on ${time.day} ${getMonth(time)} on $formattedTime";
+}
+
+String dateGetter(String time1, BuildContext context) {
+  final time = DateTime.fromMillisecondsSinceEpoch(int.parse(time1));
+
+  final now = DateTime.now();
+  if (now.day == time.day && now.month == time.month && now.year == time.year) {
+    return "Today";
+  }
+  if (now.month == time.month &&
+      now.year == time.year &&
+      now.day - time.day == 1) {
+    return "Yesterday";
+  }
+
+  if (now.year - time.year > 1) {
+    final date = "${time.day} ${getMonth(time)},${time.year}";
+    return date;
+  }
+  return "${time.day} $getMonth(time)";
 }
 
 String getMonth(DateTime data) {
@@ -116,4 +163,14 @@ String getConversationId(String id) {
   return uid.hashCode <= id.toString().hashCode
       ? '${uid.toString()}_${id.toString()}'
       : '${id.toString()}_${uid.toString()}';
+}
+
+String formatNumber(String number) {
+  final num3 = number.substring(number.length - 5);
+  final num2 = number.substring(number.length - 10, number.length - 5);
+  if (number.length > 10) {
+    final num1 = number.substring(0, number.length - 10);
+    return "$num1 $num2 $num3";
+  }
+  return "$num2 $num3";
 }

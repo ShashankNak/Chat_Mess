@@ -6,6 +6,7 @@ import 'package:chat_mess/screens/contacts/search_contacts.dart';
 import 'package:chat_mess/screens/home/profile_screen.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:page_transition/page_transition.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,11 +19,35 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool isOnline = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    SystemChannels.lifecycle.setMessageHandler((message) {
+      if (message == AppLifecycleState.paused.toString() ||
+          message == AppLifecycleState.inactive.toString()) {
+        if (isOnline == false) {
+          return Future.value(message);
+        }
+        setState(() {
+          isOnline = false;
+        });
+        Api.updateOnlineStatus(isOnline);
+      }
+
+      if (message == AppLifecycleState.resumed.toString()) {
+        if (isOnline == true) {
+          return Future.value(message);
+        }
+        setState(() {
+          isOnline = true;
+        });
+        Api.updateOnlineStatus(isOnline);
+      }
+      return Future.value(message);
+    });
     Api.getSelfInfo();
   }
 

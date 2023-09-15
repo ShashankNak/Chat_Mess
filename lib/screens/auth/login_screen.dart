@@ -98,6 +98,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       key: _formkey,
                       child: TextFormField(
                         maxLength: 10,
+                        keyboardType: TextInputType.number,
                         validator: (value) {
                           if (!isNumber) {
                             return "Invalid Phone Number";

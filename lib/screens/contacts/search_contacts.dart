@@ -3,8 +3,10 @@ import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/models/user_model.dart';
 import 'package:chat_mess/screens/contacts/user_card_contacts.dart';
 import 'package:chat_mess/widgets/consts.dart';
-import 'package:contacts_service/contacts_service.dart';
+// import 'package:contacts_service/contacts_service.dart';
+import 'package:fast_contacts/fast_contacts.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class SearchContactsScreen extends StatefulWidget {
@@ -15,32 +17,40 @@ class SearchContactsScreen extends StatefulWidget {
 }
 
 class _SearchContactsScreenState extends State<SearchContactsScreen> {
-  List<Contact> contacts = [];
-  bool isLoading = true;
-  List<ChatUser> userList = [];
+  List<Contact> _contacts = [];
+  bool isLoading = false;
+  bool isContactLoading = false;
+  String? _text;
   List<ChatUser> userDataList = [];
+
   @override
   void initState() {
     super.initState();
-    getContactPermission();
+    loadContacts();
   }
 
-  void getContactPermission() async {
-    if (await Permission.contacts.isGranted) {
-      fetchContacts();
-    } else {
-      await Permission.contacts.request();
+  Future<void> loadContacts() async {
+    try {
+      bool isGranted = await Permission.contacts.status.isGranted;
+      if (!isGranted) {
+        isGranted = await Permission.contacts.request().isGranted;
+      }
+      if (isGranted) {
+        isContactLoading = true;
+        if (mounted) setState(() {});
+        final sw = Stopwatch()..start();
+        _contacts = await FastContacts.getAllContacts(
+            fields: [ContactField.phoneNumbers]);
+        sw.stop();
+        _text = "${sw.elapsedMilliseconds}ms";
+      }
+    } on PlatformException {
+      _text = 'error';
+    } finally {
+      isContactLoading = false;
     }
-  }
-
-  void fetchContacts() async {
-    await ContactsService.getContacts().then((value) {
-      contacts = value;
-    });
-
-    setState(() {
-      isLoading = false;
-    });
+    if (!mounted) return;
+    setState(() {});
   }
 
   Future<void> addUser(ChatUser user) async {
@@ -84,6 +94,17 @@ class _SearchContactsScreenState extends State<SearchContactsScreen> {
     });
   }
 
+  Widget centerWidget() {
+    return Center(
+      child: Text(
+        "No users in contacts. Share the App",
+        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+              color: Theme.of(context).colorScheme.onBackground,
+            ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -109,7 +130,7 @@ class _SearchContactsScreenState extends State<SearchContactsScreen> {
                 ),
           ),
           actions: [
-            if (isLoading)
+            if (isLoading || isContactLoading)
               Container(
                 margin: EdgeInsets.only(right: size.width / 70),
                 padding: EdgeInsets.all(size.width / 30),
@@ -117,7 +138,22 @@ class _SearchContactsScreenState extends State<SearchContactsScreen> {
                 child: CircularProgressIndicator(
                   color: Theme.of(context).colorScheme.onPrimary,
                 ),
-              )
+              ),
+            IconButton(
+              icon: SizedBox(
+                height: 24,
+                width: 24,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: isContactLoading
+                      ? const CircularProgressIndicator()
+                      : const Icon(Icons.refresh),
+                ),
+              ),
+              color: Theme.of(context).colorScheme.onPrimary,
+              onPressed: loadContacts,
+            ),
+            Center(child: Text(_text ?? '', textAlign: TextAlign.center)),
           ],
         ),
         body: StreamBuilder(
@@ -132,22 +168,25 @@ class _SearchContactsScreenState extends State<SearchContactsScreen> {
               case ConnectionState.active:
               case ConnectionState.done:
                 userDataList = [];
-                if (snapshot.data == null) {
-                  return Center(
-                    child: Text(
-                      "No users in contacts. Share the App",
-                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                            color: Theme.of(context).colorScheme.onBackground,
-                          ),
-                    ),
-                  );
+                if (!snapshot.hasData ||
+                    snapshot.data == null ||
+                    snapshot.data!.docs.isEmpty ||
+                    _contacts.isEmpty) {
+                  isContactLoading = false;
+                  return centerWidget();
                 }
                 final data = snapshot.data!.docs;
-                userList = data.map((e) => ChatUser.fromMap(e.data())).toList();
-                for (Contact contact in contacts) {
+                final userList =
+                    data.map((e) => ChatUser.fromMap(e.data())).toList();
+                for (Contact contact in _contacts) {
                   for (ChatUser chatUser in userList) {
+                    // if (contact.phones == null) {
+                    //   continue;
+                    // }
+                    // String phone = convertNumber(
+                    //     contact.phones![0].value.toString());
                     String phone =
-                        convertNumber(contact.phones![0].value.toString());
+                        convertNumber(contact.phones[0].number.toString());
                     if (chatUser.phoneNumber.contains(phone)) {
                       userDataList.add(chatUser);
                     }
@@ -155,14 +194,8 @@ class _SearchContactsScreenState extends State<SearchContactsScreen> {
                 }
 
                 if (userDataList.isEmpty) {
-                  return Center(
-                    child: Text(
-                      "No users in contacts. Share the App",
-                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                            color: Theme.of(context).colorScheme.onBackground,
-                          ),
-                    ),
-                  );
+                  isContactLoading = false;
+                  return centerWidget();
                 }
 
                 return ListView.builder(

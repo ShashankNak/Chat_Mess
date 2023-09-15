@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:chat_mess/apis/api.dart';
 import 'package:chat_mess/models/chat_msg_model.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
+import 'package:chat_mess/widgets/consts.dart';
 import 'package:chat_mess/widgets/message_card.dart';
 import 'package:chat_mess/widgets/online_status_update.dart';
 import 'package:flutter/material.dart';
@@ -80,15 +81,80 @@ class _OneToOneChatState extends State<OneToOneChat> {
 
                           if (_message.isNotEmpty) {
                             Api.updateMessageReadStatus(widget.user.uid);
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              _scrollController.jumpTo(
-                                  _scrollController.position.maxScrollExtent);
-                            });
+                            _message.sort(
+                              (a, b) => b.sentTime.compareTo(a.sentTime),
+                            );
+
+                            bool isSameDay = false;
+                            String newDate = '';
+
                             return ListView.builder(
                               controller: _scrollController,
                               itemCount: _message.length,
+                              reverse: true,
+                              shrinkWrap: true,
+                              physics: const ClampingScrollPhysics(),
                               itemBuilder: (context, index) {
-                                return MessageCard(msg: _message[index]);
+                                if (index == 0 && _message.length == 1) {
+                                  newDate = dateGetter(
+                                      _message[index].sentTime, context);
+                                } else if (index == _message.length - 1) {
+                                  newDate = dateGetter(
+                                      _message[index].sentTime, context);
+                                } else {
+                                  final date =
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                          int.parse(_message[index].sentTime));
+                                  final prevdate =
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                          int.parse(
+                                              _message[index + 1].sentTime));
+                                  isSameDay = (date.day == prevdate.day) &&
+                                      (date.month == prevdate.month) &&
+                                      (date.year == prevdate.year);
+
+                                  newDate = isSameDay
+                                      ? ''
+                                      : dateGetter(_message[index - 1].sentTime,
+                                          context);
+                                }
+
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    children: [
+                                      if (newDate.isNotEmpty)
+                                        Center(
+                                            child: Container(
+                                                decoration: BoxDecoration(
+                                                    color: isDark
+                                                        ? Theme.of(context)
+                                                            .colorScheme
+                                                            .background
+                                                        : Theme.of(context)
+                                                            .colorScheme
+                                                            .primary,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20)),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(
+                                                      15.0),
+                                                  child: Text(
+                                                    newDate,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyLarge!
+                                                        .copyWith(
+                                                            color: isDark
+                                                                ? Colors.white
+                                                                : Colors.black),
+                                                  ),
+                                                ))),
+                                      MessageCard(msg: _message[index]),
+                                    ],
+                                  ),
+                                );
                               },
                             );
                           }

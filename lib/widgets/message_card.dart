@@ -12,25 +12,35 @@ class MessageCard extends StatelessWidget {
     final isMe = Api.me.uid == msg.fromId;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: size.height / 90),
-      child: Row(
-        mainAxisAlignment:
-            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (isMe) showTime(context, isDark, size, isMe),
-          if (isMe) showMsg(context, isMe, isDark),
-          if (!isMe) showMsg(context, isMe, isDark),
-          if (!isMe) showTime(context, isDark, size, isMe),
-        ],
-      ),
+
+    if (msg.fromId == Api.me.uid && msg.deleteForMe == true) {
+      return const SizedBox.shrink();
+    }
+
+    if (msg.toId == Api.me.uid && msg.deleteForYou == true) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      children: [
+        Container(
+          margin: EdgeInsets.symmetric(vertical: size.height / 90),
+          child: Row(
+            mainAxisAlignment:
+                isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (isMe) showTime(context, isDark, size, isMe),
+              if (isMe) showMsg(context, isMe, isDark),
+              if (!isMe) showMsg(context, isMe, isDark),
+              if (!isMe) showTime(context, isDark, size, isMe),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   Widget showTime(BuildContext context, bool isDark, Size size, bool isMe) {
-    final time =
-        TimeOfDay.fromDateTime(dateTimeGetter(msg.sentTime)).format(context);
     return Row(
       children: [
         if (msg.read.isNotEmpty && isMe)
@@ -42,7 +52,7 @@ class MessageCard extends StatelessWidget {
           width: size.width / 60,
         ),
         Text(
-          time,
+          timeGetter(msg.sentTime, context),
           style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                 fontSize: size.height / 70,
                 color: Theme.of(context).colorScheme.onBackground,

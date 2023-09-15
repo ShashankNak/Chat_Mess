@@ -43,16 +43,19 @@ dependencies:
   lottie: ^2.6.0
   pinput: ^3.0.0
   firebase_auth: ^4.7.2
+  # flutter_contacts: ^1.1.7+1
   shared_preferences: ^2.2.0
   firebase_storage: ^11.2.6
   cloud_firestore: ^4.8.4
   line_awesome_flutter: ^2.0.0
   image_picker: ^1.0.2
   flutter_image_compress: ^2.0.4
-  contacts_service: ^0.6.3
+  # contacts_service: ^0.6.3
   permission_handler: ^10.4.3
   page_transition: ^2.0.9
   emoji_picker_flutter: ^1.6.1
+  cached_network_image: ^3.2.3
+  fast_contacts: ^3.0.3
 
 
 dev_dependencies:

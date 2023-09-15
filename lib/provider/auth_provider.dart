@@ -47,7 +47,7 @@ class AuthProvider extends StateNotifier<AuthState> {
         },
         verificationFailed: (error) {
           showSnackBar(context, error.message.toString());
-          state.isLoading = true;
+          state.isLoading = false;
           log(error.message.toString());
           Navigator.of(context).pop();
         },
@@ -63,7 +63,9 @@ class AuthProvider extends StateNotifier<AuthState> {
                 type: PageTransitionType.rightToLeftWithFade),
           );
         },
-        codeAutoRetrievalTimeout: (verificationId) {},
+        codeAutoRetrievalTimeout: (verificationId) {
+          state.isLoading = false;
+        },
       );
     } on FirebaseAuthException catch (e) {
       () {

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/screens/chats/one_to_one_chat.dart';
 import 'package:chat_mess/widgets/consts.dart';
@@ -13,8 +14,6 @@ class UserCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    final time =
-        TimeOfDay.fromDateTime(dateTimeGetter(user.lastActive)).format(context);
     return Column(
       children: [
         InkWell(
@@ -44,14 +43,19 @@ class UserCard extends StatelessWidget {
                     fontWeight: FontWeight.w400,
                   ),
             ),
-            trailing: Text(
-              time,
-              style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                    color: Theme.of(context).colorScheme.onBackground,
-                    fontSize: size.height / 60,
-                    fontWeight: FontWeight.w400,
+            trailing: user.isOnline
+                ? CircleAvatar(
+                    backgroundColor: const Color.fromARGB(255, 0, 255, 132),
+                    maxRadius: size.height / 150,
+                  )
+                : Text(
+                    timeGetter(user.lastActive, context),
+                    style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                          color: Theme.of(context).colorScheme.onBackground,
+                          fontSize: size.height / 60,
+                          fontWeight: FontWeight.w400,
+                        ),
                   ),
-            ),
             leading: InkWell(
               onTap: () {
                 showDialog(
@@ -70,20 +74,36 @@ class UserCard extends StatelessWidget {
                       )
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(size.height / 7),
-                        child: Image.network(
+                        child: CachedNetworkImage(
+                          imageUrl: user.image,
                           width: size.height / 10,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Image.asset(
-                              profile2,
-                              height: size.height / 4,
-                              width: size.height / 4,
-                              fit: BoxFit.cover,
-                            );
-                          },
+                          height: size.height / 10,
                           alignment: Alignment.center,
-                          user.image,
                           fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const CircularProgressIndicator(),
+                          errorWidget: (context, url, error) => Image.asset(
+                            profile2,
+                            height: size.height / 4,
+                            width: size.height / 4,
+                            fit: BoxFit.cover,
+                          ),
                         ),
+
+                        // child: Image.network(
+                        //   width: size.height / 10,
+                        //   errorBuilder: (context, error, stackTrace) {
+                        //     return Image.asset(
+                        //       profile2,
+                        //       height: size.height / 4,
+                        //       width: size.height / 4,
+                        //       fit: BoxFit.cover,
+                        //     );
+                        //   },
+                        //   alignment: Alignment.center,
+                        //   user.image,
+                        //   fit: BoxFit.cover,
+                        // ),
                       ),
               ),
             ),

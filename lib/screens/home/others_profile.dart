@@ -110,6 +110,31 @@ class OtherProfileScreen extends StatelessWidget {
                 SizedBox(
                   height: size.height / 30,
                 ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(Icons.phone, size: size.width / 10),
+                    SizedBox(
+                      width: size.width / 20,
+                    ),
+                    Expanded(
+                        child: Text(
+                      formatNumber(user.phoneNumber),
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            fontSize: size.height / 30,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                    )),
+                  ],
+                ),
+                SizedBox(
+                  height: size.height / 70,
+                ),
+                Divider(thickness: size.height / 400),
+                SizedBox(
+                  height: size.height / 30,
+                ),
               ],
             ),
           ),

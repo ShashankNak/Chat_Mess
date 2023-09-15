@@ -20,6 +20,28 @@ class Api {
         .snapshots();
   }
 
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> getUserInfo(
+      String uid) {
+    return firestore.collection("userdata").doc(uid).snapshots();
+  }
+
+  static Future<void> updateOnlineStatus(bool isOnline) async {
+    final time = DateTime.now().millisecondsSinceEpoch.toString();
+    final i = int.tryParse(time) ?? -1;
+    if (i == -1) {
+      await firestore.collection("userdata").doc(me.uid).update({
+        'isOnline': isOnline,
+      });
+      return;
+    }
+    // log("time on function: ${DateTime.fromMillisecondsSinceEpoch(i)}");
+    await firestore.collection("userdata").doc(me.uid).update({
+      'isOnline': isOnline,
+      'lastActive': time,
+    });
+    return;
+  }
+
   static Future<void> getSelfInfo() async {
     await firestore.collection('userdata').doc(user.uid).get().then((value) {
       if (value.exists) {
@@ -47,7 +69,7 @@ class Api {
         fromId: auth.currentUser!.uid,
         chatId: id,
         sentTime: time,
-        deleteForEvery: false,
+        deleteForYou: false,
         deleteForMe: false,
         read: "");
     final ref =

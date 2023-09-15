@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'dart:developer';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_mess/apis/api.dart';
 // import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -29,6 +30,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void initState() {
+    setState(() {
+      Api.getSelfInfo();
+    });
     super.initState();
   }
 
@@ -422,11 +426,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   width: size.height / 4,
                                   fit: BoxFit.cover,
                                 )
-                              : Image.network(
-                                  Api.me.image,
+                              : CachedNetworkImage(
+                                  imageUrl: Api.me.image,
                                   height: size.height / 4,
                                   width: size.height / 4,
+                                  alignment: Alignment.center,
                                   fit: BoxFit.cover,
+                                  placeholder: (context, url) =>
+                                      const CircularProgressIndicator(),
+                                  errorWidget: (context, url, error) =>
+                                      Image.asset(
+                                    profile2,
+                                    height: size.height / 4,
+                                    width: size.height / 4,
+                                    fit: BoxFit.cover,
+                                  ),
                                 )
                           : Image.file(
                               File(_image!),
@@ -533,6 +547,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   size, "About", _aboutController);
                             },
                             icon: const Icon(Icons.edit)),
+                  ],
+                ),
+                SizedBox(
+                  height: size.height / 70,
+                ),
+                Divider(thickness: size.height / 400),
+                SizedBox(
+                  height: size.height / 70,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(Icons.phone, size: size.width / 10),
+                    SizedBox(
+                      width: size.width / 20,
+                    ),
+                    Expanded(
+                        child: Text(
+                      formatNumber(Api.me.phoneNumber),
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            fontSize: size.height / 30,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                    )),
                   ],
                 ),
                 SizedBox(

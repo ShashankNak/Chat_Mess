@@ -129,7 +129,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                       size2: size.height / 2.3,
                     ),
                     Text(
-                      "A SMS with a One Time Password (OTP) has been sent to ${widget.phoneNumber}",
+                      "A SMS with a One Time Password (OTP) has been sent to ${formatNumber(widget.phoneNumber)}",
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
                             fontSize: size.height / 40,

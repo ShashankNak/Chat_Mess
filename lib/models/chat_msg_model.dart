@@ -5,7 +5,7 @@ class MessageModel {
   late String chatId;
   late String sentTime;
   late bool deleteForMe;
-  late bool deleteForEvery;
+  late bool deleteForYou;
   late String read;
 
   MessageModel({
@@ -14,7 +14,7 @@ class MessageModel {
     required this.fromId,
     required this.chatId,
     required this.sentTime,
-    required this.deleteForEvery,
+    required this.deleteForYou,
     required this.deleteForMe,
     required this.read,
   });
@@ -24,7 +24,7 @@ class MessageModel {
       toId: map['toId'] ?? '',
       fromId: map['fromId'] ?? '',
       chatId: map['chatId'] ?? '',
-      deleteForEvery: map['deleteForEvery'] ?? false,
+      deleteForYou: map['deleteForYou'] ?? false,
       deleteForMe: map['deleteForMe'] ?? false,
       read: map['read'] ?? false,
       sentTime: map['sentTime'] ?? '',
@@ -38,7 +38,7 @@ class MessageModel {
       'fromId': fromId,
       'chatId': chatId,
       'deleteForMe': deleteForMe,
-      'deleteForEvery': deleteForEvery,
+      'deleteForEvery': deleteForYou,
       'read': read,
       'sentTime': sentTime,
     };
