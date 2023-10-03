@@ -1,8 +1,14 @@
+import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:chat_mess/apis/api.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:path_provider/path_provider.dart';
+
+const String userChatfolder = 'user_chat_DB';
+const String userChatdb = 'user_chat.db';
 
 const Color g1 = Color.fromARGB(255, 26, 56, 103);
 const Color g2 = Color.fromARGB(255, 40, 57, 92);
@@ -173,4 +179,36 @@ String formatNumber(String number) {
     return "$num1 $num2 $num3";
   }
   return "$num2 $num3";
+}
+
+Future<String> createInternalFolder(String folder) async {
+  final abc = (await getExternalStorageDirectories())!.first;
+  final path = Directory("${abc.path}/$folder");
+  String res = '';
+
+  if (await path.exists()) {
+    log("Existed file");
+    res = path.path;
+  } else {
+    log("created new folder");
+    final Directory appDocDirNewFolder = await path.create(recursive: true);
+    res = appDocDirNewFolder.path;
+  }
+  return res;
+}
+
+Future<void> deletefile(Directory file) async {
+  log("entered delete");
+  final s = await file.exists();
+  log(s.toString());
+  try {
+    if (await file.exists()) {
+      log("deleting");
+      await file.delete().then((value) {
+        log("deleted: ${value.path}");
+      });
+    }
+  } catch (e) {
+    // error in getting access to the file.
+  }
 }

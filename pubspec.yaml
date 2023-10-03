@@ -57,6 +57,12 @@ dependencies:
   cached_network_image: ^3.2.3
   fast_contacts: ^3.0.3
 
+  #dependencies for checking internet connections
+  connectivity_plus: ^4.0.2
+  internet_connection_checker: ^1.0.0+1
+  path_provider: ^2.1.1
+  sqflite: ^2.3.0
+
 
 dev_dependencies:
   flutter_test:

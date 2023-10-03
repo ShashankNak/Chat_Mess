@@ -1,7 +1,12 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:chat_mess/provider/auth_provider.dart';
 import 'package:chat_mess/screens/auth/make_profile_screen.dart';
 import 'package:chat_mess/screens/home/home_screen.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:pinput/pinput.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../widgets/consts.dart';
@@ -24,6 +29,46 @@ class OtpScreen extends ConsumerStatefulWidget {
 class _OtpScreenState extends ConsumerState<OtpScreen> {
   final TextEditingController pinController = TextEditingController();
   bool isLoading = false;
+
+  bool hasInternet = true;
+  late StreamSubscription subscription;
+  late StreamSubscription internetSubscription;
+  void checkConnectionStatus() {
+    subscription = Connectivity().onConnectivityChanged.listen((event) {
+      final isInternet = event != ConnectivityResult.none;
+      if (mounted) {
+        setState(() {
+          hasInternet = isInternet;
+        });
+      }
+    });
+    internetSubscription =
+        InternetConnectionChecker().onStatusChange.listen((event) {
+      final isInternet = event == InternetConnectionStatus.connected;
+      if (mounted) {
+        setState(() {
+          hasInternet = isInternet;
+        });
+        if (!hasInternet) {
+          showSnackBar(context, "No Internet");
+        }
+      }
+    });
+    log("Has Internet: ${hasInternet.toString()}");
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    checkConnectionStatus();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    subscription.cancel();
+    internetSubscription.cancel();
+  }
 
   void verifyOtp(BuildContext context, String userOtp) {
     setState(() {
@@ -171,10 +216,12 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                       color1: w2,
                       color2: b1,
                       submit: () {
-                        if (pinController.text.trim().length == 6) {
-                          verifyOtp(context, pinController.text.trim());
-                        } else {
-                          showSnackBar(context, "Enter 6-Digit Code");
+                        if (hasInternet) {
+                          if (pinController.text.trim().length == 6) {
+                            verifyOtp(context, pinController.text.trim());
+                          } else {
+                            showSnackBar(context, "Enter 6-Digit Code");
+                          }
                         }
                       },
                       widget: isLoading

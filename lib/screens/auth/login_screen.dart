@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:chat_mess/provider/auth_provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,7 +29,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       displayName: "India",
       displayNameNoCountryCode: "India",
       e164Key: "");
-
   bool isNumber = false;
 
   void _submit() {
@@ -42,6 +45,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void sendPhoneNumber() {
     ref.read(authProvider.notifier).signInWithPhone(
         context, phoneController.text.trim(), selectedCountry.phoneCode);
+  }
+
+  bool hasInternet = true;
+  late StreamSubscription subscription;
+  late StreamSubscription internetSubscription;
+  void checkConnectionStatus() {
+    subscription = Connectivity().onConnectivityChanged.listen((event) {
+      final isInternet = event != ConnectivityResult.none;
+      if (mounted) {
+        setState(() {
+          hasInternet = isInternet;
+        });
+      }
+    });
+    internetSubscription =
+        InternetConnectionChecker().onStatusChange.listen((event) {
+      final isInternet = event == InternetConnectionStatus.connected;
+      if (mounted) {
+        setState(() {
+          hasInternet = isInternet;
+        });
+        if (!hasInternet) {
+          showSnackBar(context, "No Internet");
+        }
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    checkConnectionStatus();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    subscription.cancel();
+    internetSubscription.cancel();
   }
 
   @override
@@ -98,6 +140,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       key: _formkey,
                       child: TextFormField(
                         maxLength: 10,
+                        onTap: checkConnectionStatus,
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (!isNumber) {
@@ -201,7 +244,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       size: size,
                       color1: w2,
                       color2: b1,
-                      submit: ap.isLoading ? () {} : _submit,
+                      submit: ap.isLoading || !hasInternet ? () {} : _submit,
                       widget: ap.isLoading
                           ? const CircularProgressIndicator()
                           : const Text(

@@ -1,6 +1,11 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:chat_mess/screens/auth/login_screen.dart';
 import 'package:chat_mess/widgets/consts.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:page_transition/page_transition.dart';
 
 class StartScreen extends StatefulWidget {
@@ -11,6 +16,46 @@ class StartScreen extends StatefulWidget {
 }
 
 class _StartScreenState extends State<StartScreen> {
+  bool hasInternet = true;
+  late StreamSubscription subscription;
+  late StreamSubscription internetSubscription;
+  void checkConnectionStatus() {
+    subscription = Connectivity().onConnectivityChanged.listen((event) {
+      final isInternet = event != ConnectivityResult.none;
+      if (mounted) {
+        setState(() {
+          hasInternet = isInternet;
+        });
+      }
+    });
+    internetSubscription =
+        InternetConnectionChecker().onStatusChange.listen((event) {
+      final isInternet = event == InternetConnectionStatus.connected;
+      if (mounted) {
+        setState(() {
+          hasInternet = isInternet;
+        });
+        if (!hasInternet) {
+          showSnackBar(context, "No Internet");
+        }
+      }
+    });
+    log("Has Internet: ${hasInternet.toString()}");
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    checkConnectionStatus();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    subscription.cancel();
+    internetSubscription.cancel();
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -58,9 +103,12 @@ class _StartScreenState extends State<StartScreen> {
                 color1: w2,
                 color2: b1,
                 submit: () {
-                  Navigator.of(context).push(PageTransition(
-                      child: const LoginScreen(),
-                      type: PageTransitionType.rightToLeftWithFade));
+                  checkConnectionStatus();
+                  hasInternet
+                      ? Navigator.of(context).push(PageTransition(
+                          child: const LoginScreen(),
+                          type: PageTransitionType.rightToLeftWithFade))
+                      : null;
                 },
                 widget: const Text(
                   "Get Started",

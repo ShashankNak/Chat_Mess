@@ -1,4 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
+import 'package:chat_mess/widgets/consts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -49,11 +51,20 @@ class UserCardContacts extends StatelessWidget {
                   )
                 : ClipRRect(
                     borderRadius: BorderRadius.circular(size.height / 7),
-                    child: Image.network(
+                    child: CachedNetworkImage(
+                      imageUrl: user.image,
                       width: size.height / 10,
+                      height: size.height / 10,
                       alignment: Alignment.center,
-                      user.image,
                       fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                          const CircularProgressIndicator(),
+                      errorWidget: (context, url, error) => Image.asset(
+                        profile2,
+                        height: size.height / 4,
+                        width: size.height / 4,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
           ),

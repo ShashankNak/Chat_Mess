@@ -89,21 +89,6 @@ class UserCard extends StatelessWidget {
                             fit: BoxFit.cover,
                           ),
                         ),
-
-                        // child: Image.network(
-                        //   width: size.height / 10,
-                        //   errorBuilder: (context, error, stackTrace) {
-                        //     return Image.asset(
-                        //       profile2,
-                        //       height: size.height / 4,
-                        //       width: size.height / 4,
-                        //       fit: BoxFit.cover,
-                        //     );
-                        //   },
-                        //   alignment: Alignment.center,
-                        //   user.image,
-                        //   fit: BoxFit.cover,
-                        // ),
                       ),
               ),
             ),
