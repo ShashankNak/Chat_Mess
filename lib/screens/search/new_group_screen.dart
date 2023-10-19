@@ -1,25 +1,33 @@
 import 'dart:developer';
 import 'dart:io';
+// import 'package:chat_mess/apis/api.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_mess/apis/api.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
+import 'package:chat_mess/models/group_model.dart';
+import 'package:chat_mess/models/user_model.dart';
 import 'package:chat_mess/screens/auth/start_screen.dart';
 import 'package:chat_mess/screens/home/home_screen.dart';
+import 'package:chat_mess/widgets/consts.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:page_transition/page_transition.dart';
-import '../../widgets/consts.dart';
 
-class MakeProfileScreen extends StatefulWidget {
-  const MakeProfileScreen({super.key});
+class NewGroupScreen extends StatefulWidget {
+  const NewGroupScreen(
+      {super.key, required this.groupId, required this.members});
+  final String groupId;
+  final List<ChatUser> members;
 
   @override
-  State<MakeProfileScreen> createState() => _MakeProfileScreenState();
+  State<NewGroupScreen> createState() => _NewGroupScreenState();
 }
 
-class _MakeProfileScreenState extends State<MakeProfileScreen> {
+class _NewGroupScreenState extends State<NewGroupScreen> {
   final _formkey = GlobalKey<FormState>();
   final name = TextEditingController();
   final about = TextEditingController();
@@ -52,7 +60,7 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
     final XFile? photo = await picker.pickImage(source: source);
     if (photo != null) {
       final path =
-          "/data/user/0/com.example.chat_mess/cache/${Api.auth.currentUser!.uid}$counter.jpeg";
+          "/data/user/0/com.example.chat_mess/cache/${widget.groupId}$counter.jpeg";
 
       log("image size: ${await photo.length()}");
       log("image path: ${photo.path}");
@@ -144,7 +152,7 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
     );
   }
 
-  //creating profile and storing image in firebase storage
+  // creating profile and storing image in firebase storage
   void submit() async {
     final isValid = _formkey.currentState!.validate();
     final time = DateTime.now().millisecondsSinceEpoch.toString();
@@ -157,39 +165,31 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
     setState(() {
       _isloading = true;
     });
-
+    List<String> users = [Api.auth.currentUser!.uid];
+    for (ChatUser i in widget.members) {
+      users.add(i.uid);
+    }
     try {
-      final userExist = (await Api.firestore
-              .collection('userdata')
-              .doc(Api.auth.currentUser!.uid)
-              .get())
-          .exists;
-
-      if (userExist) return;
-
       if (_image == null) {
-        final chatUser = ChatUser(
-            uid: Api.auth.currentUser!.uid,
-            phoneNumber: Api.auth.currentUser!.phoneNumber!,
-            name: name.text,
-            about: about.text,
-            image: "",
-            createdAt: time,
-            lastActive: time,
-            isOnline: true,
-            pushToken: "");
+        final group = GroupModel(
+          admins: [Api.auth.currentUser!.uid],
+          users: users,
+          id: widget.groupId,
+          name: name.text,
+          about: about.text,
+          image: "",
+          createdAt: time,
+        );
 
         await Api.firestore
-            .collection('userdata')
-            .doc(Api.auth.currentUser!.uid)
-            .set(chatUser.toMap())
+            .collection('groupdata')
+            .doc(widget.groupId)
+            .set(group.toJson())
             .then((value) async {
           setState(() {
             _isloading = false;
           });
-          Api.auth.currentUser!.updateDisplayName(name.text);
-          Api.auth.currentUser!.updatePhotoURL(_image);
-          showSnackBar(context, "Profile Created.");
+          showSnackBar(context, "Group Created.");
           Navigator.of(context).pushAndRemoveUntil(
               PageTransition(
                   child: const HomeScreen(),
@@ -200,9 +200,8 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
       }
       final image = File(_image!);
       final ext = image.path.split(".").last;
-      final ref = Api.storage
-          .ref()
-          .child('profile_pictures/${Api.auth.currentUser!.uid}.$ext');
+      final ref =
+          Api.storage.ref().child('group_profiles/${widget.groupId}.$ext');
 
       //storage file in ref with path
 
@@ -215,34 +214,44 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
         final String img = await ref.getDownloadURL();
         log(img);
 
-        final chatUser = ChatUser(
-            uid: Api.auth.currentUser!.uid,
-            phoneNumber: Api.auth.currentUser!.phoneNumber!,
-            name: name.text,
-            about: about.text,
-            image: img,
-            createdAt: time,
-            lastActive: time,
-            isOnline: true,
-            pushToken: "");
+        final group = GroupModel(
+          admins: [Api.auth.currentUser!.uid],
+          users: users,
+          id: widget.groupId,
+          name: name.text,
+          about: about.text,
+          image: img,
+          createdAt: time,
+        );
 
         await Api.firestore
-            .collection('userdata')
-            .doc(Api.auth.currentUser!.uid)
-            .set(chatUser.toMap())
-            .then((value) {
+            .collection('groupdata')
+            .doc(widget.groupId)
+            .set(group.toJson())
+            .then((value) async {
           setState(() {
             _isloading = false;
           });
-          Api.auth.currentUser!.updateDisplayName(name.text);
-          Api.auth.currentUser!.updatePhotoURL(_image);
-          showSnackBar(context, "Profile Created.");
+          showSnackBar(context, "Group Created.");
           Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder: (context) => const HomeScreen(),
-              ),
+              PageTransition(
+                  child: const HomeScreen(),
+                  type: PageTransitionType.rightToLeftWithFade),
               (route) => false);
         });
+
+        for (String ids in users) {
+          final raw = await Api.firestore.collection("users").doc(ids).get();
+          if (raw.data() == null) {
+            continue;
+          }
+          List<String> gl = UserModel.fromMap(raw.data()!).groupList;
+          gl.add(widget.groupId);
+          await Api.firestore
+              .collection("users")
+              .doc(ids)
+              .update({"groupList": gl});
+        }
       });
     } catch (e) {
       log(e.toString());
@@ -259,16 +268,14 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // bottom sheet for image picking
-
-    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    // final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(
-          "Profile",
+          "Create Group",
           style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                 fontSize: size.height / 40,
                 fontWeight: FontWeight.bold,
@@ -276,15 +283,32 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
                     Theme.of(context).colorScheme.onBackground.withOpacity(0.8),
               ),
         ),
-        leading: Icon(
-          LineAwesomeIcons.user_1,
-          color: Theme.of(context).colorScheme.onPrimary,
-          size: size.height / 30,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          icon: Icon(
+            Icons.arrow_back,
+            color: Theme.of(context).colorScheme.onPrimary,
+            size: size.height / 30,
+          ),
         ),
         actions: [
+          if (_isloading)
+            Container(
+              margin: EdgeInsets.only(right: size.width / 70),
+              padding: EdgeInsets.all(size.width / 30),
+              width: size.width / 8,
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
           IconButton(
-            onPressed: () {},
-            icon: Icon(isDark ? LineAwesomeIcons.moon : LineAwesomeIcons.sun),
+            onPressed: _isloading ? () {} : submit,
+            icon: Icon(
+              Icons.arrow_right,
+              size: size.width / 10,
+            ),
           ),
         ],
       ),
@@ -337,7 +361,9 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
                               color: Theme.of(context).colorScheme.onSecondary,
                             ),
                             onPressed: () {
-                              showBottomSheet(size);
+                              if (!_isloading) {
+                                showBottomSheet(size);
+                              }
                             },
                           ),
                         ),
@@ -355,7 +381,7 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Icon(Icons.person, size: size.width / 10),
+                      Icon(Icons.group, size: size.width / 10),
                       SizedBox(
                         width: size.width / 20,
                       ),
@@ -513,23 +539,27 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
                   ),
                   Divider(thickness: size.height / 400),
                   SizedBox(
-                    height: size.height / 30,
+                    height: size.height / 70,
                   ),
-                  buildButton(
-                    size: size,
-                    color1: w2,
-                    color2: b1,
-                    submit: _isloading ? () {} : submit,
-                    widget: _isloading
-                        ? const CircularProgressIndicator()
-                        : const Text(
-                            "Submit",
-                            style: TextStyle(
-                              color: b1,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
+                  Text(
+                    "Members",
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: Theme.of(context).colorScheme.onBackground,
+                          fontSize: size.height / 50,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  SizedBox(
+                    height: size.height / 70,
+                  ),
+                  Divider(thickness: size.height / 400),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: widget.members.length,
+                      itemBuilder: (context, index) {
+                        return userCard(widget.members[index], size);
+                      },
+                    ),
                   )
                 ],
               ),
@@ -537,6 +567,72 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget userCard(ChatUser user, Size size) {
+    return Column(
+      children: [
+        ListTile(
+          tileColor: Colors.transparent,
+          title: Text(
+            user.name,
+            maxLines: 1,
+            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                  color: Theme.of(context).colorScheme.onBackground,
+                  fontSize: size.height / 50,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          subtitle: Text(
+            user.about,
+            maxLines: 1,
+            style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                  color: Theme.of(context).colorScheme.onBackground,
+                  fontSize: size.height / 70,
+                  fontWeight: FontWeight.w400,
+                ),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.remove),
+            onPressed: () {
+              if (!_isloading) {
+                widget.members.remove(user);
+                setState(() {});
+              }
+            },
+          ),
+          leading: CircleAvatar(
+            foregroundColor: Theme.of(context).colorScheme.onSecondary,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            child: user.image == ""
+                ? const Icon(
+                    CupertinoIcons.person,
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(size.height / 7),
+                    child: CachedNetworkImage(
+                      imageUrl: user.image,
+                      width: size.height / 10,
+                      height: size.height / 10,
+                      alignment: Alignment.center,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                          const CircularProgressIndicator(),
+                      errorWidget: (context, url, error) => Image.asset(
+                        profile2,
+                        height: size.height / 10,
+                        width: size.height / 10,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+        Divider(
+          thickness: size.height / 400,
+        )
+      ],
     );
   }
 }

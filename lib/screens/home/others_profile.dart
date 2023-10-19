@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:flutter/material.dart';
@@ -43,11 +44,20 @@ class OtherProfileScreen extends StatelessWidget {
                           width: size.height / 4,
                           fit: BoxFit.cover,
                         )
-                      : Image.network(
-                          user.image,
+                      : CachedNetworkImage(
+                          imageUrl: user.image,
                           height: size.height / 4,
                           width: size.height / 4,
+                          alignment: Alignment.center,
                           fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const CircularProgressIndicator(),
+                          errorWidget: (context, url, error) => Image.asset(
+                            profile2,
+                            height: size.height / 4,
+                            width: size.height / 4,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                 ),
                 SizedBox(

@@ -69,13 +69,15 @@ class Api {
         fromId: auth.currentUser!.uid,
         chatId: id,
         sentTime: time,
-        deleteForYou: false,
-        deleteForMe: false,
+        deleteChat: {
+          auth.currentUser!.uid: false,
+          user.uid: false,
+        },
         read: "");
     final ref =
         firestore.collection('chats/${getConversationId(user.uid)}/messages/');
 
-    await ref.doc(time).set(message.toJson());
+    await ref.doc(time).set(message.toMap());
   }
 
   static Future<void> updateMessageReadStatus(String uid) async {
@@ -99,8 +101,38 @@ class Api {
         await firestore
             .collection('chats/${getConversationId(uid)}/messages/')
             .doc(m.sentTime)
-            .update(m.toJson());
+            .update(m.toMap());
       }
     }
+  }
+
+  static Future<void> deleteMessageForMe(MessageModel msg) async {
+    msg.deleteChat[auth.currentUser!.uid] = true;
+    await firestore
+        .collection('chats/${msg.chatId}/messages/')
+        .doc(msg.sentTime)
+        .update(msg.toMap());
+  }
+
+  static Future<void> deleteMessageForAll(MessageModel msg) async {
+    await firestore
+        .collection('chats/${msg.chatId}/messages/')
+        .doc(msg.sentTime)
+        .delete();
+  }
+
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> getUsersList() {
+    return Api.firestore
+        .collection("users")
+        .doc(auth.currentUser!.uid)
+        .snapshots();
+  }
+
+  static Stream<QuerySnapshot<Map<String, dynamic>>> searchUsers(
+      List<String> users) {
+    return Api.firestore
+        .collection("userdata")
+        .where('uid', whereIn: users)
+        .snapshots();
   }
 }

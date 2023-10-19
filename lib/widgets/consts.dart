@@ -9,6 +9,8 @@ import 'package:path_provider/path_provider.dart';
 
 const String userChatfolder = 'user_chat_DB';
 const String userChatdb = 'user_chat.db';
+const String chatMessagefolder = 'chat_message_DB';
+const String chatMessagedb = 'chat_message.db';
 
 const Color g1 = Color.fromARGB(255, 26, 56, 103);
 const Color g2 = Color.fromARGB(255, 40, 57, 92);
@@ -63,7 +65,7 @@ String getLastActiveTime(
   }
 
   final time = DateTime.fromMillisecondsSinceEpoch(i);
-  log(time.toString());
+  // log(time.toString());
   final now = DateTime.now();
 
   final formattedTime = TimeOfDay.fromDateTime(time).format(context);
@@ -86,6 +88,7 @@ String dateGetter(String time1, BuildContext context) {
   final time = DateTime.fromMillisecondsSinceEpoch(int.parse(time1));
 
   final now = DateTime.now();
+
   if (now.day == time.day && now.month == time.month && now.year == time.year) {
     return "Today";
   }
@@ -96,10 +99,11 @@ String dateGetter(String time1, BuildContext context) {
   }
 
   if (now.year - time.year > 1) {
-    final date = "${time.day} ${getMonth(time)},${time.year}";
+    final date =
+        "${time.day.toString()} ${getMonth(time)},${time.year.toString()}";
     return date;
   }
-  return "${time.day} $getMonth(time)";
+  return "${time.day.toString()} ${getMonth(time)}";
 }
 
 String getMonth(DateTime data) {

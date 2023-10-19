@@ -3,47 +3,133 @@ import 'package:chat_mess/models/chat_msg_model.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:flutter/material.dart';
 
-class MessageCard extends StatelessWidget {
+class MessageCard extends StatefulWidget {
   const MessageCard({super.key, required this.msg});
   final MessageModel msg;
 
   @override
+  State<MessageCard> createState() => _MessageCardState();
+}
+
+class _MessageCardState extends State<MessageCard> {
+  @override
   Widget build(BuildContext context) {
-    final isMe = Api.me.uid == msg.fromId;
+    final isMe = Api.auth.currentUser!.uid == widget.msg.fromId;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
 
-    if (msg.fromId == Api.me.uid && msg.deleteForMe == true) {
-      return const SizedBox.shrink();
-    }
+    return GestureDetector(
+      onLongPress: () {
+        dialogBox(context, size);
+      },
+      child: Column(
+        children: [
+          Container(
+            margin: EdgeInsets.symmetric(vertical: size.height / 90),
+            child: Row(
+              mainAxisAlignment:
+                  isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (isMe) showTime(context, isDark, size, isMe),
+                if (isMe) showMsg(context, isMe, isDark),
+                if (!isMe) showMsg(context, isMe, isDark),
+                if (!isMe) showTime(context, isDark, size, isMe),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    if (msg.toId == Api.me.uid && msg.deleteForYou == true) {
-      return const SizedBox.shrink();
-    }
-    return Column(
-      children: [
-        Container(
-          margin: EdgeInsets.symmetric(vertical: size.height / 90),
-          child: Row(
-            mainAxisAlignment:
-                isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (isMe) showTime(context, isDark, size, isMe),
-              if (isMe) showMsg(context, isMe, isDark),
-              if (!isMe) showMsg(context, isMe, isDark),
-              if (!isMe) showTime(context, isDark, size, isMe),
-            ],
+  void dialogBox(BuildContext context, Size size) {
+    final sameUser = widget.msg.fromId == Api.auth.currentUser!.uid;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor:
+            Theme.of(context).colorScheme.background.withOpacity(0.6),
+        title: Center(
+          child: Text(
+            "Delete Chat",
+            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                  fontSize: size.width / 25,
+                  color: Theme.of(context).colorScheme.onBackground,
+                ),
           ),
         ),
-      ],
+        content: Container(
+          padding: EdgeInsets.only(bottom: size.height / 50),
+          height: size.height / 5,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (sameUser)
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            Theme.of(context).colorScheme.background),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Api.deleteMessageForAll(widget.msg);
+                    },
+                    child: Text(
+                      "Delete For Everyone",
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            fontSize: size.width / 30,
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).colorScheme.onBackground,
+                          ),
+                    ),
+                  ),
+                if (sameUser)
+                  SizedBox(
+                    width: size.width / 90,
+                  ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.background),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Api.deleteMessageForMe(widget.msg);
+                  },
+                  child: Text(
+                    "Delete For Me",
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          fontSize: size.width / 30,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.onBackground,
+                        ),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.background),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    "Cancel",
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          fontSize: size.width / 30,
+                          color: Theme.of(context).colorScheme.onBackground,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   Widget showTime(BuildContext context, bool isDark, Size size, bool isMe) {
     return Row(
       children: [
-        if (msg.read.isNotEmpty && isMe)
+        if (widget.msg.read.isNotEmpty && isMe)
           Icon(
             Icons.done_all,
             color: isDark ? Colors.white : Colors.blueAccent,
@@ -52,7 +138,7 @@ class MessageCard extends StatelessWidget {
           width: size.width / 60,
         ),
         Text(
-          timeGetter(msg.sentTime, context),
+          timeGetter(widget.msg.sentTime, context),
           style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                 fontSize: size.height / 70,
                 color: Theme.of(context).colorScheme.onBackground,
@@ -114,7 +200,7 @@ class MessageCard extends StatelessWidget {
             horizontal: 12,
           ),
           child: Text(
-            msg.text,
+            widget.msg.text,
             style: TextStyle(
                 // Add a little line spacing to make the text look nicer
                 // when multilined.

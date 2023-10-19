@@ -1,15 +1,15 @@
-class MessageModel {
+class GroupMessageModel {
   late String text;
-  late String toId;
+  late String groupId;
   late String fromId;
   late String chatId;
   late String sentTime;
   late Map<String, dynamic> deleteChat;
   late String read;
 
-  MessageModel({
+  GroupMessageModel({
     required this.text,
-    required this.toId,
+    required this.groupId,
     required this.fromId,
     required this.chatId,
     required this.sentTime,
@@ -17,10 +17,10 @@ class MessageModel {
     required this.read,
   });
 
-  factory MessageModel.fromJson(Map<String, dynamic> map) {
-    return MessageModel(
+  factory GroupMessageModel.fromJson(Map<String, dynamic> map) {
+    return GroupMessageModel(
       text: map['text'] ?? "",
-      toId: map['toId'] ?? "",
+      groupId: map['groupId'] ?? "",
       fromId: map['fromId'] ?? "",
       chatId: map['chatId'] ?? "",
       deleteChat: map['deleteChat'] ?? {},
@@ -32,7 +32,7 @@ class MessageModel {
   Map<String, dynamic> toMap() {
     return {
       'text': text,
-      'toId': toId,
+      'groupId': groupId,
       'fromId': fromId,
       'chatId': chatId,
       'deleteChat': deleteChat,

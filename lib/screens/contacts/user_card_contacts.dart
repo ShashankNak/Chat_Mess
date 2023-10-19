@@ -61,8 +61,8 @@ class UserCardContacts extends StatelessWidget {
                           const CircularProgressIndicator(),
                       errorWidget: (context, url, error) => Image.asset(
                         profile2,
-                        height: size.height / 4,
-                        width: size.height / 4,
+                        height: size.height / 10,
+                        width: size.height / 10,
                         fit: BoxFit.cover,
                       ),
                     ),

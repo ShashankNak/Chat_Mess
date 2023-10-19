@@ -1,9 +1,10 @@
 import 'package:chat_mess/apis/api.dart';
 import 'package:chat_mess/screens/auth/start_screen.dart';
-import 'package:chat_mess/screens/chats/group_chat.dart';
-import 'package:chat_mess/screens/chats/user_chat.dart';
+import 'package:chat_mess/screens/chats/group/group_chat.dart';
+import 'package:chat_mess/screens/chats/personal/user_chat.dart';
 import 'package:chat_mess/screens/contacts/search_contacts.dart';
 import 'package:chat_mess/screens/home/profile_screen.dart';
+import 'package:chat_mess/screens/search/search_screen.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,9 +32,11 @@ class _HomeScreenState extends State<HomeScreen>
         if (isOnline == false) {
           return Future.value(message);
         }
-        setState(() {
-          isOnline = false;
-        });
+        if (mounted) {
+          setState(() {
+            isOnline = false;
+          });
+        }
         Api.updateOnlineStatus(isOnline);
       }
 
@@ -41,9 +44,11 @@ class _HomeScreenState extends State<HomeScreen>
         if (isOnline == true) {
           return Future.value(message);
         }
-        setState(() {
-          isOnline = true;
-        });
+        if (mounted) {
+          setState(() {
+            isOnline = true;
+          });
+        }
         Api.updateOnlineStatus(isOnline);
       }
       return Future.value(message);
@@ -104,10 +109,27 @@ class _HomeScreenState extends State<HomeScreen>
                           child: const StartScreen(),
                           type: PageTransitionType.leftToRightWithFade),
                       (route) => false);
+                } else if (value == 'newGroup') {
+                  Navigator.of(context).push(
+                    PageTransition(
+                      child: const SearchScreen(
+                          title: "New Group", subTitle: "Add Participants"),
+                      type: PageTransitionType.rightToLeftWithFade,
+                    ),
+                  );
                 }
               },
               itemBuilder: (context) {
                 return [
+                  PopupMenuItem<String>(
+                    value: 'newGroup',
+                    child: Text(
+                      'New Group',
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            color: Theme.of(context).colorScheme.onBackground,
+                          ),
+                    ),
+                  ),
                   PopupMenuItem<String>(
                     value: 'profile',
                     child: Text(

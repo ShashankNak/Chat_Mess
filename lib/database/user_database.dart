@@ -4,10 +4,10 @@ import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:sqflite/sqflite.dart';
 
-class ChatDatabase {
-  static final ChatDatabase instance = ChatDatabase._init();
+class UserDatabase {
+  static final UserDatabase instance = UserDatabase._init();
   static Database? _database;
-  ChatDatabase._init();
+  UserDatabase._init();
 
   Future<Database> get database async {
     if (_database != null) return _database!;

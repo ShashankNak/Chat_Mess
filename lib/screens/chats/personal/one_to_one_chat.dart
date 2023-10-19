@@ -69,15 +69,43 @@ class _OneToOneChatState extends State<OneToOneChat> {
                       switch (snapshot.connectionState) {
                         case ConnectionState.waiting:
                         case ConnectionState.none:
-                          return const Center(
-                            child: CircularProgressIndicator(),
+                          return Center(
+                            child: Text(
+                              "Something went wrong!",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge!
+                                  .copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onBackground),
+                            ),
                           );
                         case ConnectionState.active:
                         case ConnectionState.done:
+                          if (snapshot.data == null) {
+                            return Center(
+                              child: Text(
+                                "Nothing Yet",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge!
+                                    .copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onBackground),
+                              ),
+                            );
+                          }
                           final data = snapshot.data!.docs;
                           _message = data
                               .map((e) => MessageModel.fromJson(e.data()))
                               .toList();
+
+                          if (_message.isNotEmpty) {
+                            _message.removeWhere((element) =>
+                                element.deleteChat[Api.auth.currentUser!.uid]!);
+                          }
 
                           if (_message.isNotEmpty) {
                             Api.updateMessageReadStatus(widget.user.uid);
@@ -93,12 +121,9 @@ class _OneToOneChatState extends State<OneToOneChat> {
                               itemCount: _message.length,
                               reverse: true,
                               shrinkWrap: true,
-                              physics: const ClampingScrollPhysics(),
+                              physics: const BouncingScrollPhysics(),
                               itemBuilder: (context, index) {
-                                if (index == 0 && _message.length == 1) {
-                                  newDate = dateGetter(
-                                      _message[index].sentTime, context);
-                                } else if (index == _message.length - 1) {
+                                if (index == _message.length - 1) {
                                   newDate = dateGetter(
                                       _message[index].sentTime, context);
                                 } else {
@@ -112,11 +137,22 @@ class _OneToOneChatState extends State<OneToOneChat> {
                                   isSameDay = (date.day == prevdate.day) &&
                                       (date.month == prevdate.month) &&
                                       (date.year == prevdate.year);
-
                                   newDate = isSameDay
                                       ? ''
-                                      : dateGetter(_message[index - 1].sentTime,
-                                          context);
+                                      : dateGetter(
+                                          _message[index].sentTime, context);
+                                  if (index == 0) {
+                                    newDate = isSameDay
+                                        ? ""
+                                        : dateGetter(
+                                            _message[index].sentTime, context);
+                                  } else {
+                                    newDate = isSameDay
+                                        ? ''
+                                        : dateGetter(
+                                            _message[index - 1].sentTime,
+                                            context);
+                                  }
                                 }
 
                                 return Padding(
@@ -125,32 +161,33 @@ class _OneToOneChatState extends State<OneToOneChat> {
                                     children: [
                                       if (newDate.isNotEmpty)
                                         Center(
-                                            child: Container(
-                                                decoration: BoxDecoration(
-                                                    color: isDark
-                                                        ? Theme.of(context)
-                                                            .colorScheme
-                                                            .background
-                                                        : Theme.of(context)
-                                                            .colorScheme
-                                                            .primary,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20)),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(
-                                                      15.0),
-                                                  child: Text(
-                                                    newDate,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyLarge!
-                                                        .copyWith(
-                                                            color: isDark
-                                                                ? Colors.white
-                                                                : Colors.black),
-                                                  ),
-                                                ))),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: isDark
+                                                    ? Theme.of(context)
+                                                        .colorScheme
+                                                        .background
+                                                    : Theme.of(context)
+                                                        .colorScheme
+                                                        .primary,
+                                                borderRadius:
+                                                    BorderRadius.circular(20)),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(15.0),
+                                              child: Text(
+                                                newDate,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyLarge!
+                                                    .copyWith(
+                                                        color: isDark
+                                                            ? Colors.white
+                                                            : Colors.black),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                       MessageCard(msg: _message[index]),
                                     ],
                                   ),
@@ -264,6 +301,8 @@ class _OneToOneChatState extends State<OneToOneChat> {
                   ),
                   Expanded(
                     child: TextField(
+                      onEditingComplete: () =>
+                          Api.sendMessage(widget.user, _messageController.text),
                       controller: _messageController,
                       onSubmitted: (value) =>
                           Api.sendMessage(widget.user, _messageController.text),

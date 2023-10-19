@@ -35,29 +35,6 @@ class ChatUser {
     required this.pushToken,
   });
 
-  ChatUser copy({
-    String? uid,
-    bool? isOnline,
-    String? phoneNumber,
-    String? name,
-    String? about,
-    String? image,
-    String? createdAt,
-    String? lastActive,
-    String? pushToken,
-  }) =>
-      ChatUser(
-        uid: uid ?? this.uid,
-        phoneNumber: phoneNumber ?? this.phoneNumber,
-        name: name ?? this.name,
-        about: about ?? this.about,
-        image: image ?? this.image,
-        createdAt: createdAt ?? this.createdAt,
-        lastActive: lastActive ?? this.lastActive,
-        isOnline: isOnline ?? this.isOnline,
-        pushToken: pushToken ?? this.pushToken,
-      );
-
   factory ChatUser.fromJson(Map<String, Object?> json) => ChatUser(
         uid: json[ChatUserFields.uid].toString(),
         phoneNumber: json[ChatUserFields.phoneNumber].toString(),
@@ -79,7 +56,7 @@ class ChatUser {
       about: map['about'] ?? '',
       createdAt: map['createdAt'] ?? '',
       image: map['image'] ?? '',
-      isOnline: map['isOnline'] ?? '',
+      isOnline: map['isOnline'] ?? false,
       lastActive: map['lastActive'] ?? '',
       pushToken: map['pushToken'] ?? '',
     );

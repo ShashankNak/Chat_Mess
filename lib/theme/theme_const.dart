@@ -29,6 +29,6 @@ ThemeData darkTheme = ThemeData(
     onSecondary: Colors.black,
     secondaryContainer: Color.fromARGB(255, 22, 21, 21),
     onPrimaryContainer: Colors.white60,
-    tertiary: Color.fromARGB(255, 21, 51, 79),
+    tertiary: Color.fromARGB(255, 34, 104, 169),
   ),
 );
