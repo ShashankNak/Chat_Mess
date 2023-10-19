@@ -7,8 +7,6 @@ import 'package:chat_mess/widgets/consts.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:sqflite/sqflite.dart';
-
 import '../../apis/api.dart';
 import '../../models/user_model.dart';
 import '../../widgets/user_card.dart';
