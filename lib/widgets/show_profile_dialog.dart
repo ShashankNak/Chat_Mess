@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
-import 'package:chat_mess/screens/chats/one_to_one_chat.dart';
+import 'package:chat_mess/screens/chats/personal/one_to_one_chat.dart';
 import 'package:chat_mess/screens/home/others_profile.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:flutter/material.dart';
