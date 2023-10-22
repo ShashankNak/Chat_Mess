@@ -5,7 +5,7 @@ import 'package:chat_mess/screens/home/others_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
 
-import 'consts.dart';
+import '../../../widgets/consts.dart';
 
 class OnlineStatusUpdate extends StatelessWidget {
   const OnlineStatusUpdate({super.key, required this.user});

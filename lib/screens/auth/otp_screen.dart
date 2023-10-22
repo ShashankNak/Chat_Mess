@@ -214,7 +214,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     buildButton(
                       size: size,
                       color1: w2,
-                      color2: b1,
                       submit: () {
                         if (hasInternet) {
                           if (pinController.text.trim().length == 6) {

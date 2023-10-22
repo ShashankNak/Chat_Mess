@@ -243,7 +243,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     buildButton(
                       size: size,
                       color1: w2,
-                      color2: b1,
                       submit: ap.isLoading || !hasInternet ? () {} : _submit,
                       widget: ap.isLoading
                           ? const CircularProgressIndicator()

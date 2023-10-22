@@ -101,7 +101,6 @@ class _StartScreenState extends State<StartScreen> {
               buildButton(
                 size: size,
                 color1: w2,
-                color2: b1,
                 submit: () {
                   checkConnectionStatus();
                   hasInternet

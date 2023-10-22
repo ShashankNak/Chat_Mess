@@ -136,10 +136,9 @@ String getMonth(DateTime data) {
   return "NA";
 }
 
-buildButton(
+Widget buildButton(
     {required Size size,
     required Color color1,
-    required Color color2,
     required VoidCallback submit,
     required Widget widget}) {
   return ElevatedButton(

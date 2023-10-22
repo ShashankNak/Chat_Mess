@@ -518,7 +518,6 @@ class _MakeProfileScreenState extends State<MakeProfileScreen> {
                   buildButton(
                     size: size,
                     color1: w2,
-                    color2: b1,
                     submit: _isloading ? () {} : submit,
                     widget: _isloading
                         ? const CircularProgressIndicator()

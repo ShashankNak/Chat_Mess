@@ -1,10 +1,10 @@
 import 'package:chat_mess/apis/api.dart';
 import 'package:chat_mess/screens/auth/start_screen.dart';
 import 'package:chat_mess/screens/chats/group/group_chat.dart';
-import 'package:chat_mess/screens/chats/personal/user_chat.dart';
+import 'package:chat_mess/screens/chats/user_chat.dart';
 import 'package:chat_mess/screens/contacts/search_contacts.dart';
 import 'package:chat_mess/screens/home/profile_screen.dart';
-import 'package:chat_mess/screens/search/search_screen.dart';
+import 'package:chat_mess/screens/newGroup/search_screen.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

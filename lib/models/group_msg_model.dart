@@ -2,16 +2,14 @@ class GroupMessageModel {
   late String text;
   late String groupId;
   late String fromId;
-  late String chatId;
   late String sentTime;
   late Map<String, dynamic> deleteChat;
-  late String read;
+  late Map<String, dynamic> read;
 
   GroupMessageModel({
     required this.text,
     required this.groupId,
     required this.fromId,
-    required this.chatId,
     required this.sentTime,
     required this.deleteChat,
     required this.read,
@@ -22,9 +20,8 @@ class GroupMessageModel {
       text: map['text'] ?? "",
       groupId: map['groupId'] ?? "",
       fromId: map['fromId'] ?? "",
-      chatId: map['chatId'] ?? "",
       deleteChat: map['deleteChat'] ?? {},
-      read: map['read'] ?? "",
+      read: map['read'] ?? {},
       sentTime: map['sentTime'] ?? "",
     );
   }
@@ -34,7 +31,6 @@ class GroupMessageModel {
       'text': text,
       'groupId': groupId,
       'fromId': fromId,
-      'chatId': chatId,
       'deleteChat': deleteChat,
       'read': read,
       'sentTime': sentTime,

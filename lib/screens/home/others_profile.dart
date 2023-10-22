@@ -14,6 +14,7 @@ class OtherProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(
           "${user.name} Profile",
           style: Theme.of(context).textTheme.bodyLarge!.copyWith(

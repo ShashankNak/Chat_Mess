@@ -1,20 +1,22 @@
 import 'package:chat_mess/apis/api.dart';
-import 'package:chat_mess/models/chat_msg_model.dart';
+import 'package:chat_mess/models/chat_user_model.dart';
+import 'package:chat_mess/models/group_msg_model.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:flutter/material.dart';
 
-class MessageCard extends StatefulWidget {
-  const MessageCard({super.key, required this.msg});
-  final MessageModel msg;
+class GroupMessageCard extends StatefulWidget {
+  const GroupMessageCard({super.key, required this.chat, required this.user});
+  final GroupMessageModel chat;
+  final ChatUser user;
 
   @override
-  State<MessageCard> createState() => _MessageCardState();
+  State<GroupMessageCard> createState() => _GroupMessageCardState();
 }
 
-class _MessageCardState extends State<MessageCard> {
+class _GroupMessageCardState extends State<GroupMessageCard> {
   @override
   Widget build(BuildContext context) {
-    final isMe = Api.auth.currentUser!.uid == widget.msg.fromId;
+    final isMe = Api.auth.currentUser!.uid == widget.chat.fromId;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
 
@@ -32,8 +34,8 @@ class _MessageCardState extends State<MessageCard> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (isMe) showTime(context, isDark, size, isMe),
-                if (isMe) showMsg(context, isMe, isDark),
-                if (!isMe) showMsg(context, isMe, isDark),
+                if (isMe) showMsg(context, isMe, isDark, size),
+                if (!isMe) showMsg(context, isMe, isDark, size),
                 if (!isMe) showTime(context, isDark, size, isMe),
               ],
             ),
@@ -44,7 +46,7 @@ class _MessageCardState extends State<MessageCard> {
   }
 
   void dialogBox(BuildContext context, Size size) {
-    final sameUser = widget.msg.fromId == Api.auth.currentUser!.uid;
+    final sameUser = widget.chat.fromId == Api.auth.currentUser!.uid;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -73,7 +75,7 @@ class _MessageCardState extends State<MessageCard> {
                             Theme.of(context).colorScheme.background),
                     onPressed: () {
                       Navigator.of(context).pop();
-                      Api.deleteMessageForAll(widget.msg);
+                      Api.deleteGroupMessageForAll(widget.chat);
                     },
                     child: Text(
                       "Delete For Everyone",
@@ -94,7 +96,7 @@ class _MessageCardState extends State<MessageCard> {
                           Theme.of(context).colorScheme.background),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    Api.deleteMessageForMe(widget.msg);
+                    Api.deleteGroupMessageForMe(widget.chat);
                   },
                   child: Text(
                     "Delete For Me",
@@ -129,7 +131,7 @@ class _MessageCardState extends State<MessageCard> {
   Widget showTime(BuildContext context, bool isDark, Size size, bool isMe) {
     return Row(
       children: [
-        if (widget.msg.read.isNotEmpty && isMe)
+        if (widget.chat.read.isNotEmpty && isMe)
           Icon(
             Icons.done_all,
             color: isDark ? Colors.white : Colors.blueAccent,
@@ -138,7 +140,7 @@ class _MessageCardState extends State<MessageCard> {
           width: size.width / 60,
         ),
         Text(
-          timeGetter(widget.msg.sentTime, context),
+          timeGetter(widget.chat.sentTime, context),
           style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                 fontSize: size.height / 70,
                 color: Theme.of(context).colorScheme.onBackground,
@@ -148,7 +150,7 @@ class _MessageCardState extends State<MessageCard> {
     );
   }
 
-  Widget showMsg(BuildContext context, bool isMe, bool isDark) {
+  Widget showMsg(BuildContext context, bool isMe, bool isDark, Size size) {
     return Column(
       crossAxisAlignment:
           isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -199,15 +201,31 @@ class _MessageCardState extends State<MessageCard> {
             vertical: 4,
             horizontal: 12,
           ),
-          child: Text(
-            widget.msg.text,
-            style: TextStyle(
-                // Add a little line spacing to make the text look nicer
-                // when multilined.
-                fontWeight: FontWeight.w600,
-                height: 1.3,
-                color: Theme.of(context).colorScheme.onBackground),
-            softWrap: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isMe)
+                Text(
+                  widget.user.name,
+                  style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                        fontWeight: FontWeight.w400,
+                        fontSize: size.width / 40,
+                        color: Theme.of(context).colorScheme.onBackground,
+                      ),
+                  softWrap: true,
+                ),
+              Text(
+                widget.chat.text,
+                style: TextStyle(
+                    // Add a little line spacing to make the text look nicer
+                    // when multilined.
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                    color: Theme.of(context).colorScheme.onBackground),
+                softWrap: true,
+              ),
+            ],
           ),
         ),
         // Text(

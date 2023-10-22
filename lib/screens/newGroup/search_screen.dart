@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_mess/apis/api.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/models/user_model.dart';
-import 'package:chat_mess/screens/search/new_group_screen.dart';
+import 'package:chat_mess/screens/newGroup/new_group_screen.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

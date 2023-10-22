@@ -85,7 +85,7 @@ class _GroupChatTabState extends State<GroupChatTab> {
                         itemCount: groupDataList.length,
                         itemBuilder: (context, index) {
                           return GroupCard(
-                            user: groupDataList[index],
+                            group: groupDataList[index],
                           );
                         },
                       );
