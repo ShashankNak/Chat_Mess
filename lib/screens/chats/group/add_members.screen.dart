@@ -26,8 +26,10 @@ class AddMemberScreen extends StatefulWidget {
 class _AddMemberScreenState extends State<AddMemberScreen> {
   List<ChatUser> usersList = [];
   List<ChatUser> filteredList = [];
+  List<String> finalList = [];
   List<String> selectedUsers = [];
   bool isSearch = false;
+  bool isLoading = false;
   TextEditingController search = TextEditingController();
 
   void filterSearch(String value) {
@@ -148,12 +150,23 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                 );
               }
               UserModel user = UserModel.fromMap(snapshot.data!.data()!);
-              List<String> finalList = user.usersList;
+              finalList = user.usersList;
               finalList.addAll(widget.group.users);
               finalList = finalList.toSet().toList();
               finalList.removeWhere(
                   (element) => widget.group.users.contains(element));
-
+              if (finalList.isEmpty) {
+                return Center(
+                  child: Text(
+                    "No Users",
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          fontSize: size.width / 15,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onBackground,
+                        ),
+                  ),
+                );
+              }
               return StreamBuilder(
                 stream: Api.searchUsers(finalList),
                 builder: (context, snapshot) {
@@ -165,6 +178,13 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
                       );
                     case ConnectionState.active:
                     case ConnectionState.done:
+                      if (isLoading) {
+                        return Center(
+                          child: CircularProgressIndicator.adaptive(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.onBackground),
+                        );
+                      }
                       if (!snapshot.hasData ||
                           snapshot.data == null ||
                           snapshot.data!.docs.isEmpty) {
@@ -208,21 +228,22 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
         splashColor: isDark
             ? Theme.of(context).colorScheme.background
             : Theme.of(context).colorScheme.tertiary,
-        onPressed: () {
-          FocusScope.of(context).unfocus();
-          if (selectedUsers.length < 2) {
-            showSnackBar(context, "Select Atleast 2 members");
-            return;
-          }
-          final searchList = usersList
-              .where((element) => selectedUsers.contains(element.uid))
-              .toList();
-          log(searchList.length.toString());
-          selectedUsers = [];
-          setState(() {});
-
-          Navigator.of(context).pop();
-        },
+        onPressed: isLoading
+            ? () {}
+            : () async {
+                FocusScope.of(context).unfocus();
+                isLoading = true;
+                setState(() {});
+                //API CALLING AND SELECTED USERS
+                await Api.addMemberToGroup(widget.group, selectedUsers)
+                    .then((value) {
+                  selectedUsers = [];
+                  setState(() {});
+                  isLoading = false;
+                  setState(() {});
+                  Navigator.of(context).pop(value);
+                });
+              },
         child: Icon(
           Icons.arrow_circle_right_rounded,
           size: size.width / 8,

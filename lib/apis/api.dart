@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 import 'package:chat_mess/models/chat_msg_model.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/models/group_model.dart';
@@ -63,6 +64,7 @@ class Api {
       ChatUser user) {
     return firestore
         .collection('chats/${getConversationId(user.uid)}/messages/')
+        .orderBy("sentTime", descending: true)
         .snapshots();
   }
 
@@ -70,7 +72,10 @@ class Api {
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> getAllGroupMessages(
       GroupModel group) {
-    return firestore.collection('groupChat/${group.id}/messages/').snapshots();
+    return firestore
+        .collection('groupChat/${group.id}/messages/')
+        .orderBy("sentTime", descending: true)
+        .snapshots();
   }
 
   //for personal chats
@@ -89,7 +94,9 @@ class Api {
           auth.currentUser!.uid: false,
           user.uid: false,
         },
-        read: "");
+        read: "",
+        chatImage: "",
+        type: Type.text);
     final ref =
         firestore.collection('chats/${getConversationId(user.uid)}/messages/');
 
@@ -106,12 +113,14 @@ class Api {
     }
 
     final message = GroupMessageModel(
-        text: msg,
-        groupId: group.id,
-        fromId: auth.currentUser!.uid,
-        sentTime: time,
-        deleteChat: deleteChat,
-        read: {});
+      text: msg,
+      groupId: group.id,
+      fromId: auth.currentUser!.uid,
+      sentTime: time,
+      deleteChat: deleteChat,
+      type: TypeG.text,
+      chatImage: '',
+    );
     final ref = firestore.collection('groupChat/${group.id}/messages/');
 
     await ref.doc(time).set(message.toMap());
@@ -144,34 +153,21 @@ class Api {
     }
   }
 
-  //for group chats
-  static Future<void> updateGroupMessageReadStatus(String id) async {
-    final snapshot =
-        await firestore.collection('groupChat/$id/messages/').get();
-
-    if (snapshot.docs.isEmpty) {
-      log("empty");
-      return;
-    }
-    final data =
-        snapshot.docs.map((e) => GroupMessageModel.fromJson(e.data())).toList();
-    final now = DateTime.now().millisecondsSinceEpoch.toString();
-
-    for (GroupMessageModel m in data) {
-      if (!m.read.containsKey(auth.currentUser!.uid) && m.fromId != me.uid) {
-        m.read.addAll({auth.currentUser!.uid: now});
-        log("updating.....");
-        log(m.read[auth.currentUser!.uid]);
-        await firestore
-            .collection('groupChat/$id/messages/')
-            .doc(m.sentTime)
-            .update(m.toMap());
-      }
-    }
-  }
-
   //for group Chats
   static Future<void> deleteGroupMessageForAll(GroupMessageModel msg) async {
+    if (msg.type == TypeG.image) {
+      final ext = msg.chatImage.split("?").first.split(".").last;
+      log('images/${msg.groupId}/${msg.sentTime}.$ext');
+      try {
+        final ref = Api.storage
+            .ref()
+            .child('images/${msg.groupId}/${msg.sentTime}.$ext');
+        await ref.delete();
+      } catch (e) {
+        log(e.toString());
+        return;
+      }
+    }
     await firestore
         .collection('groupChat/${msg.groupId}/messages/')
         .doc(msg.sentTime)
@@ -196,6 +192,18 @@ class Api {
   }
 
   static Future<void> deleteMessageForAll(MessageModel msg) async {
+    if (msg.type == Type.image) {
+      final ext = msg.chatImage.split("?").first.split(".").last;
+      log('images/${getConversationId(msg.toId)}/${msg.sentTime}.$ext');
+      try {
+        final ref = Api.storage.ref().child(
+            'images/${getConversationId(msg.toId)}/${msg.sentTime}.$ext');
+        await ref.delete();
+      } catch (e) {
+        log(e.toString());
+        return;
+      }
+    }
     await firestore
         .collection('chats/${msg.chatId}/messages/')
         .doc(msg.sentTime)
@@ -319,5 +327,111 @@ class Api {
         .collection("userdata")
         .where('uid', whereIn: users)
         .snapshots();
+  }
+
+  static Future<GroupModel> addMemberToGroup(
+      GroupModel group, List<String> uids) async {
+    for (String uid in uids) {
+      final raw = await firestore.collection("users").doc(uid).get();
+      if (raw.data() == null) {
+        continue;
+      }
+      final user = UserModel.fromMap(raw.data()!);
+      user.groupList.add(group.id);
+      await firestore.collection('users').doc(uid).update(user.toMap());
+
+      group.users.add(user.uid);
+      await firestore
+          .collection("groupdata")
+          .doc(group.id)
+          .update(group.toJson());
+    }
+    return group;
+  }
+
+  //Image sending in chat
+  static Future<void> sendChatImageMessage(
+      ChatUser user, String image, String text) async {
+    final file = File(image);
+    final ext = file.path.split(".").last;
+    final time = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final id = getConversationId(user.uid);
+
+    final ref = Api.storage
+        .ref()
+        .child('images/${getConversationId(user.uid)}/$time.$ext');
+
+    //storage file in ref with path
+
+    //uploading image
+    await ref
+        .putFile(file, SettableMetadata(contentType: 'image/$ext'))
+        .then((p0) async {
+      log('data transfered: ${p0.bytesTransferred / 1000} kb');
+
+      final String img = await ref.getDownloadURL();
+      log(img);
+      final message = MessageModel(
+          text: text,
+          toId: user.uid,
+          fromId: auth.currentUser!.uid,
+          chatId: id,
+          sentTime: time,
+          deleteChat: {
+            auth.currentUser!.uid: false,
+            user.uid: false,
+          },
+          read: "",
+          chatImage: img,
+          type: Type.image);
+
+      await firestore
+          .collection('chats/$id/messages/')
+          .doc(time)
+          .set(message.toMap());
+    });
+  }
+
+  //group sending image
+  static Future<void> sendgroupImageMessage(
+      GroupModel group, String image, String text) async {
+    final file = File(image);
+    final ext = file.path.split(".").last;
+    final time = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final ref = Api.storage.ref().child('images/${group.id}/$time.$ext');
+
+    //storage file in ref with path
+
+    //uploading image
+    await ref
+        .putFile(file, SettableMetadata(contentType: 'image/$ext'))
+        .then((p0) async {
+      log('data transfered: ${p0.bytesTransferred / 1000} kb');
+      final String img = await ref.getDownloadURL();
+      log(img);
+
+      Map<String, dynamic> deleteChat = {};
+
+      for (String i in group.users) {
+        deleteChat.addAll({i: false});
+      }
+
+      final message = GroupMessageModel(
+        text: text,
+        groupId: group.id,
+        fromId: auth.currentUser!.uid,
+        sentTime: time,
+        deleteChat: deleteChat,
+        chatImage: img,
+        type: TypeG.image,
+      );
+
+      await firestore
+          .collection('groupChat/${group.id}/messages/')
+          .doc(time)
+          .set(message.toMap());
+    });
   }
 }

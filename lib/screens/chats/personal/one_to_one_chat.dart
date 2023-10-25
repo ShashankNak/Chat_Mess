@@ -1,13 +1,18 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'package:chat_mess/apis/api.dart';
 import 'package:chat_mess/models/chat_msg_model.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
+import 'package:chat_mess/screens/chats/personal/image_upload_screen.dart';
+import 'package:chat_mess/screens/chats/personal/image_showing.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:chat_mess/screens/chats/personal/message_card.dart';
 import 'package:chat_mess/screens/chats/personal/online_status_update.dart';
 import 'package:flutter/material.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:page_transition/page_transition.dart';
 
 class OneToOneChat extends StatefulWidget {
   const OneToOneChat({super.key, required this.user});
@@ -20,8 +25,8 @@ class OneToOneChat extends StatefulWidget {
 class _OneToOneChatState extends State<OneToOneChat> {
   final TextEditingController _messageController = TextEditingController();
   bool _showEmoji = false;
+  bool _isUploading = false;
   List<MessageModel> _message = [];
-  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -36,7 +41,12 @@ class _OneToOneChatState extends State<OneToOneChat> {
 
     return SafeArea(
       child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
+        onTap: () {
+          setState(() {
+            _showEmoji = false;
+          });
+          FocusScope.of(context).unfocus();
+        },
         child: WillPopScope(
           onWillPop: () {
             if (_showEmoji) {
@@ -70,17 +80,9 @@ class _OneToOneChatState extends State<OneToOneChat> {
                         case ConnectionState.waiting:
                         case ConnectionState.none:
                           return Center(
-                            child: Text(
-                              "Something went wrong!",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge!
-                                  .copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onBackground),
-                            ),
-                          );
+                              child: CircularProgressIndicator(
+                            color: Theme.of(context).colorScheme.onBackground,
+                          ));
                         case ConnectionState.active:
                         case ConnectionState.done:
                           if (snapshot.data == null) {
@@ -117,7 +119,6 @@ class _OneToOneChatState extends State<OneToOneChat> {
                             String newDate = '';
 
                             return ListView.builder(
-                              controller: _scrollController,
                               itemCount: _message.length,
                               reverse: true,
                               shrinkWrap: true,
@@ -188,7 +189,24 @@ class _OneToOneChatState extends State<OneToOneChat> {
                                             ),
                                           ),
                                         ),
-                                      MessageCard(msg: _message[index]),
+                                      GestureDetector(
+                                          onTap: _message[index].type ==
+                                                  Type.image
+                                              ? () {
+                                                  Navigator.of(context).push(
+                                                      PageTransition(
+                                                          child: ImageShowing(
+                                                            msg:
+                                                                _message[index],
+                                                            user: widget.user,
+                                                          ),
+                                                          type:
+                                                              PageTransitionType
+                                                                  .fade));
+                                                }
+                                              : () {},
+                                          child: MessageCard(
+                                              msg: _message[index])),
                                     ],
                                   ),
                                 );
@@ -213,6 +231,17 @@ class _OneToOneChatState extends State<OneToOneChat> {
                     },
                   ),
                 ),
+                if (_isUploading)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.onBackground,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
                 messageInput(isDark, size),
                 if (_showEmoji) showEmoji(isDark, size),
               ],
@@ -235,7 +264,7 @@ class _OneToOneChatState extends State<OneToOneChat> {
             verticalSpacing: 0,
             horizontalSpacing: 0,
             gridPadding: EdgeInsets.zero,
-            initCategory: Category.RECENT,
+            initCategory: Category.SMILEYS,
             bgColor: Theme.of(context).colorScheme.background,
             indicatorColor:
                 isDark ? Colors.white : Theme.of(context).colorScheme.tertiary,
@@ -337,7 +366,29 @@ class _OneToOneChatState extends State<OneToOneChat> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      final ImagePicker picker = ImagePicker();
+                      final images =
+                          await picker.pickMultiImage(imageQuality: 70);
+
+                      if (images.isNotEmpty) {
+                        setState(() {
+                          _isUploading = true;
+                        });
+                        for (var img in images) {
+                          await Api.sendChatImageMessage(
+                                  widget.user, img.path, "")
+                              .then((value) {
+                            setState(() {
+                              _isUploading = true;
+                            });
+                          });
+                        }
+                      }
+                      setState(() {
+                        _isUploading = false;
+                      });
+                    },
                     icon: Icon(
                       Icons.image,
                       size: size.width / 14,
@@ -347,7 +398,21 @@ class _OneToOneChatState extends State<OneToOneChat> {
                     width: size.width / 90,
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      final ImagePicker picker = ImagePicker();
+                      await picker
+                          .pickImage(source: ImageSource.camera)
+                          .then((value) {
+                        if (value != null) {
+                          Navigator.of(context).push(PageTransition(
+                              child: ImageUploadScreen(
+                                file: value,
+                                user: widget.user,
+                              ),
+                              type: PageTransitionType.rightToLeftWithFade));
+                        }
+                      });
+                    },
                     icon: Icon(
                       Icons.camera_alt_rounded,
                       size: size.width / 14,
@@ -370,6 +435,10 @@ class _OneToOneChatState extends State<OneToOneChat> {
             padding: const EdgeInsets.all(10),
             shape: const CircleBorder(),
             onPressed: () {
+              if (_messageController.text.isEmpty) {
+                log("Empty messages");
+                return;
+              }
               Api.sendMessage(widget.user, _messageController.text);
               _messageController.clear();
             },

@@ -8,11 +8,14 @@ import 'package:chat_mess/models/group_model.dart';
 import 'package:chat_mess/models/group_msg_model.dart';
 import 'package:chat_mess/screens/chats/group/group_appbar.dart';
 import 'package:chat_mess/screens/chats/group/group_drawer.dart';
+import 'package:chat_mess/screens/chats/group/group_image_showing.dart';
+import 'package:chat_mess/screens/chats/group/group_image_upload_screen.dart';
 import 'package:chat_mess/screens/chats/group/group_message_card.dart';
 import 'package:chat_mess/screens/chats/group/group_profile_screen.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
 
 class GroupChatScreen extends StatefulWidget {
@@ -27,12 +30,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   bool _showEmoji = false;
   List<GroupMessageModel> _message = [];
-  final ScrollController _scrollController = ScrollController();
+  bool _isUploading = false;
 
   @override
   void initState() {
     super.initState();
-    Api.updateGroupMessageReadStatus(widget.group.id);
   }
 
   @override
@@ -42,7 +44,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     return SafeArea(
       child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
+        onTap: () {
+          setState(() {
+            _showEmoji = false;
+          });
+          FocusScope.of(context).unfocus();
+        },
         child: WillPopScope(
           onWillPop: () {
             if (_showEmoji) {
@@ -131,7 +138,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           }
 
                           if (_message.isNotEmpty) {
-                            Api.updateGroupMessageReadStatus(widget.group.id);
                             _message.sort(
                               (a, b) => b.sentTime.compareTo(a.sentTime),
                             );
@@ -140,7 +146,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             String newDate = '';
 
                             return ListView.builder(
-                              controller: _scrollController,
                               itemCount: _message.length,
                               reverse: true,
                               shrinkWrap: true,
@@ -242,9 +247,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                                     ),
                                                   ),
                                                 ),
-                                              GroupMessageCard(
-                                                chat: _message[index],
-                                                user: userdata,
+                                              GestureDetector(
+                                                onTap: () => Navigator.of(
+                                                        context)
+                                                    .push(PageTransition(
+                                                        child:
+                                                            GroupImageShowing(
+                                                                msg: _message[
+                                                                    index],
+                                                                user: userdata),
+                                                        type: PageTransitionType
+                                                            .fade)),
+                                                child: GroupMessageCard(
+                                                  chat: _message[index],
+                                                  user: userdata,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -273,6 +290,17 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     },
                   ),
                 ),
+                if (_isUploading)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.onBackground,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
                 messageInput(isDark, size),
                 if (_showEmoji) showEmoji(isDark, size),
               ],
@@ -395,7 +423,29 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      final ImagePicker picker = ImagePicker();
+                      final images =
+                          await picker.pickMultiImage(imageQuality: 70);
+
+                      if (images.isNotEmpty) {
+                        setState(() {
+                          _isUploading = true;
+                        });
+                        for (var img in images) {
+                          await Api.sendgroupImageMessage(
+                                  widget.group, img.path, "")
+                              .then((value) {
+                            setState(() {
+                              _isUploading = true;
+                            });
+                          });
+                        }
+                      }
+                      setState(() {
+                        _isUploading = false;
+                      });
+                    },
                     icon: Icon(
                       Icons.image,
                       size: size.width / 14,
@@ -405,7 +455,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     width: size.width / 90,
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      final ImagePicker picker = ImagePicker();
+                      await picker
+                          .pickImage(source: ImageSource.camera)
+                          .then((value) {
+                        if (value != null) {
+                          Navigator.of(context).push(PageTransition(
+                              child: GroupImageUploadScreen(
+                                file: value,
+                                group: widget.group,
+                              ),
+                              type: PageTransitionType.rightToLeftWithFade));
+                        }
+                      });
+                    },
                     icon: Icon(
                       Icons.camera_alt_rounded,
                       size: size.width / 14,
@@ -428,6 +492,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             padding: const EdgeInsets.all(10),
             shape: const CircleBorder(),
             onPressed: () {
+              if (_messageController.text.isEmpty) {
+                log("no empty messages");
+                return;
+              }
               Api.sendGroupMessage(widget.group, _messageController.text);
               _messageController.clear();
             },

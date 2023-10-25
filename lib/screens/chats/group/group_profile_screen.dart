@@ -1,8 +1,11 @@
+import 'dart:developer';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_mess/apis/api.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/models/group_model.dart';
 import 'package:chat_mess/screens/chats/group/add_members.screen.dart';
+import 'package:chat_mess/screens/home/profile_screen.dart';
 import 'package:chat_mess/widgets/consts.dart';
 import 'package:chat_mess/widgets/show_profile_dialog.dart';
 import 'package:flutter/cupertino.dart';
@@ -125,7 +128,8 @@ class _GroupProfileScreenState extends State<GroupProfileScreen> {
                                         fontSize: size.height / 70,
                                         color: Theme.of(context)
                                             .colorScheme
-                                            .onPrimary,
+                                            .onPrimary
+                                            .withOpacity(0.6),
                                       ),
                                 ),
                                 SizedBox(
@@ -137,7 +141,7 @@ class _GroupProfileScreenState extends State<GroupProfileScreen> {
                                       .textTheme
                                       .bodyLarge!
                                       .copyWith(
-                                        fontSize: size.height / 35,
+                                        fontSize: size.height / 50,
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onPrimary,
@@ -154,7 +158,7 @@ class _GroupProfileScreenState extends State<GroupProfileScreen> {
                             height: size.height / 70,
                           ),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
                                 "Members",
@@ -171,14 +175,15 @@ class _GroupProfileScreenState extends State<GroupProfileScreen> {
                               if (group.admins
                                   .contains(Api.auth.currentUser!.uid))
                                 IconButton(
-                                    onPressed: () {
-                                      Navigator.of(context).push(PageTransition(
-                                          child: AddMemberScreen(
-                                              title: "Add Members",
-                                              subTitle: "",
-                                              group: group),
-                                          type: PageTransitionType
-                                              .rightToLeftWithFade));
+                                    onPressed: () async {
+                                      group = await Navigator.of(context).push(
+                                          PageTransition(
+                                              child: AddMemberScreen(
+                                                  title: "Add Members",
+                                                  subTitle: "",
+                                                  group: group),
+                                              type: PageTransitionType
+                                                  .rightToLeftWithFade));
                                     },
                                     icon: const Icon(Icons.add))
                             ],
@@ -228,208 +233,248 @@ class _GroupProfileScreenState extends State<GroupProfileScreen> {
                                         .map((e) => ChatUser.fromMap(e.data()))
                                         .toList();
 
+                                    userList.sort(
+                                      (a, b) {
+                                        if (group.admins.contains(a.uid) &&
+                                                !group.admins.contains(b.uid) ||
+                                            (a.uid ==
+                                                Api.auth.currentUser!.uid)) {
+                                          return 0;
+                                        }
+
+                                        return 1;
+                                      },
+                                    );
                                     return Column(
                                       children: [
                                         Expanded(
-                                          child: ListView.builder(
-                                            itemCount: userList.length,
-                                            itemBuilder: (context, index) {
-                                              final user = userList[index];
-                                              return Column(
-                                                children: [
-                                                  InkWell(
-                                                    onLongPress: () {
-                                                      if (!group.admins
-                                                          .contains(Api
-                                                              .auth
-                                                              .currentUser!
-                                                              .uid)) {
-                                                        showDialog(
-                                                          context: context,
-                                                          builder: (context) =>
-                                                              ShowProfileDialog(
-                                                                  user: user),
-                                                        );
-                                                      }
-                                                      if (group.admins.contains(
-                                                              Api
-                                                                  .auth
-                                                                  .currentUser!
-                                                                  .uid) &&
-                                                          (user.uid !=
-                                                              Api
-                                                                  .auth
-                                                                  .currentUser!
-                                                                  .uid)) {
-                                                        showSelectDialog(
-                                                            group: group,
-                                                            size: size,
-                                                            user: user,
-                                                            makeAdmin:
-                                                                () async {
-                                                              if (group.admins
-                                                                  .contains(user
-                                                                      .uid)) {
-                                                                group = await Api
-                                                                    .removeFromGroupAdmin(
-                                                                        group,
-                                                                        user);
-                                                              } else {
-                                                                group = await Api
-                                                                    .makeGroupAdmin(
-                                                                        group,
-                                                                        user);
-                                                              }
+                                          child: _isLoading
+                                              ? Center(
+                                                  child:
+                                                      CircularProgressIndicator
+                                                          .adaptive(
+                                                    backgroundColor:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .background,
+                                                  ),
+                                                )
+                                              : ListView.builder(
+                                                  shrinkWrap: true,
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          top: 2),
+                                                  itemCount: userList.length,
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final user =
+                                                        userList[index];
+                                                    return Column(
+                                                      children: [
+                                                        InkWell(
+                                                          onLongPress:
+                                                              _isLoading
+                                                                  ? () {}
+                                                                  : () {
+                                                                      if (!group
+                                                                          .admins
+                                                                          .contains(Api
+                                                                              .auth
+                                                                              .currentUser!
+                                                                              .uid)) {
+                                                                        showDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder: (context) =>
+                                                                              ShowProfileDialog(user: user),
+                                                                        );
+                                                                      }
+                                                                      if (group.admins.contains(Api
+                                                                              .auth
+                                                                              .currentUser!
+                                                                              .uid) &&
+                                                                          (user.uid !=
+                                                                              Api.auth.currentUser!.uid)) {
+                                                                        showSelectDialog(
+                                                                            group:
+                                                                                group,
+                                                                            size:
+                                                                                size,
+                                                                            user:
+                                                                                user,
+                                                                            makeAdmin:
+                                                                                () async {
+                                                                              _isLoading = true;
+                                                                              setState(() {});
+                                                                              if (group.admins.contains(user.uid)) {
+                                                                                await Api.removeFromGroupAdmin(group, user).then((value) {
+                                                                                  group = value;
+                                                                                  _isLoading = false;
+                                                                                });
+                                                                              } else {
+                                                                                await Api.makeGroupAdmin(group, user).then((value) {
+                                                                                  group = value;
+                                                                                  _isLoading = false;
+                                                                                });
+                                                                              }
 
-                                                              setState(() {});
-                                                            },
-                                                            viewProfile: () {
-                                                              showDialog(
-                                                                context:
-                                                                    context,
-                                                                builder: (context) =>
-                                                                    ShowProfileDialog(
-                                                                        user:
-                                                                            user),
-                                                              );
-                                                            },
-                                                            kickFromGroup: () {
-                                                              Api.kickFromTheGroup(
-                                                                  group, user);
-                                                            });
-                                                      }
-                                                    },
-                                                    child: ListTile(
-                                                      title: Text(
-                                                        user.name,
-                                                        maxLines: 1,
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .bodyLarge!
-                                                            .copyWith(
-                                                              color: Theme.of(
+                                                                              setState(() {});
+                                                                            },
+                                                                            viewProfile:
+                                                                                () {},
+                                                                            kickFromGroup:
+                                                                                () {
+                                                                              _isLoading = true;
+                                                                              setState(() {});
+                                                                              Api.kickFromTheGroup(group, user).then((value) {
+                                                                                group = value;
+                                                                                _isLoading = false;
+                                                                                setState(() {});
+                                                                              });
+                                                                            });
+                                                                      }
+                                                                      if (user.uid ==
+                                                                          Api
+                                                                              .auth
+                                                                              .currentUser!
+                                                                              .uid) {
+                                                                        Navigator.of(context).push(PageTransition(
+                                                                            child:
+                                                                                const ProfileScreen(),
+                                                                            type:
+                                                                                PageTransitionType.rightToLeftWithFade));
+                                                                      }
+                                                                    },
+                                                          child: ListTile(
+                                                            title: Text(
+                                                              user.name,
+                                                              maxLines: 1,
+                                                              style: Theme.of(
                                                                       context)
-                                                                  .colorScheme
-                                                                  .onBackground,
-                                                              fontSize:
-                                                                  size.height /
-                                                                      50,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700,
-                                                            ),
-                                                      ),
-                                                      subtitle: Text(
-                                                        user.about,
-                                                        maxLines: 1,
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .bodySmall!
-                                                            .copyWith(
-                                                              color: Theme.of(
-                                                                      context)
-                                                                  .colorScheme
-                                                                  .onBackground,
-                                                              fontSize:
-                                                                  size.height /
-                                                                      70,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w400,
-                                                            ),
-                                                      ),
-                                                      trailing:
-                                                          group.admins.contains(
-                                                                  userList[
-                                                                          index]
-                                                                      .uid)
-                                                              ? Text(
-                                                                  "Admin",
-                                                                  style: Theme.of(
-                                                                          context)
-                                                                      .textTheme
-                                                                      .bodySmall!
-                                                                      .copyWith(
-                                                                        color: Theme.of(context)
-                                                                            .colorScheme
-                                                                            .onBackground,
-                                                                        fontSize:
-                                                                            size.height /
-                                                                                80,
-                                                                        fontWeight:
-                                                                            FontWeight.w400,
-                                                                      ),
-                                                                )
-                                                              : const SizedBox
-                                                                  .shrink(),
-                                                      leading: CircleAvatar(
-                                                        foregroundColor:
-                                                            Theme.of(context)
-                                                                .colorScheme
-                                                                .onSecondary,
-                                                        backgroundColor:
-                                                            Theme.of(context)
-                                                                .colorScheme
-                                                                .secondary,
-                                                        child: user.image == ""
-                                                            ? const Icon(
-                                                                CupertinoIcons
-                                                                    .person,
-                                                              )
-                                                            : ClipRRect(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            size.height /
-                                                                                7),
-                                                                child:
-                                                                    CachedNetworkImage(
-                                                                  imageUrl: user
-                                                                      .image,
-                                                                  width:
-                                                                      size.height /
-                                                                          10,
-                                                                  height:
-                                                                      size.height /
-                                                                          10,
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .center,
-                                                                  fit: BoxFit
-                                                                      .cover,
-                                                                  placeholder: (context,
-                                                                          url) =>
-                                                                      const CircularProgressIndicator(),
-                                                                  errorWidget: (context,
-                                                                          url,
-                                                                          error) =>
-                                                                      Image
-                                                                          .asset(
-                                                                    profile2,
-                                                                    height:
+                                                                  .textTheme
+                                                                  .bodyLarge!
+                                                                  .copyWith(
+                                                                    color: Theme.of(
+                                                                            context)
+                                                                        .colorScheme
+                                                                        .onBackground,
+                                                                    fontSize:
                                                                         size.height /
-                                                                            4,
-                                                                    width:
-                                                                        size.height /
-                                                                            4,
-                                                                    fit: BoxFit
-                                                                        .cover,
+                                                                            50,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w700,
                                                                   ),
-                                                                ),
-                                                              ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                    height: size.height / 90,
-                                                  ),
-                                                  Divider(
-                                                      thickness:
-                                                          size.height / 400),
-                                                ],
-                                              );
-                                            },
-                                          ),
+                                                            ),
+                                                            subtitle: Text(
+                                                              user.about,
+                                                              maxLines: 1,
+                                                              style: Theme.of(
+                                                                      context)
+                                                                  .textTheme
+                                                                  .bodySmall!
+                                                                  .copyWith(
+                                                                    color: Theme.of(
+                                                                            context)
+                                                                        .colorScheme
+                                                                        .onBackground,
+                                                                    fontSize:
+                                                                        size.height /
+                                                                            70,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w400,
+                                                                  ),
+                                                            ),
+                                                            trailing: group
+                                                                    .admins
+                                                                    .contains(
+                                                                        userList[index]
+                                                                            .uid)
+                                                                ? Text(
+                                                                    "Admin",
+                                                                    style: Theme.of(
+                                                                            context)
+                                                                        .textTheme
+                                                                        .bodySmall!
+                                                                        .copyWith(
+                                                                          color: Theme.of(context)
+                                                                              .colorScheme
+                                                                              .onBackground,
+                                                                          fontSize:
+                                                                              size.height / 80,
+                                                                          fontWeight:
+                                                                              FontWeight.w400,
+                                                                        ),
+                                                                  )
+                                                                : const SizedBox
+                                                                    .shrink(),
+                                                            leading:
+                                                                CircleAvatar(
+                                                              foregroundColor: Theme
+                                                                      .of(context)
+                                                                  .colorScheme
+                                                                  .onSecondary,
+                                                              backgroundColor:
+                                                                  Theme.of(
+                                                                          context)
+                                                                      .colorScheme
+                                                                      .secondary,
+                                                              child: user.image ==
+                                                                      ""
+                                                                  ? const Icon(
+                                                                      CupertinoIcons
+                                                                          .person,
+                                                                    )
+                                                                  : ClipRRect(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(size.height /
+                                                                              7),
+                                                                      child:
+                                                                          CachedNetworkImage(
+                                                                        imageUrl:
+                                                                            user.image,
+                                                                        width: size.height /
+                                                                            10,
+                                                                        height:
+                                                                            size.height /
+                                                                                10,
+                                                                        alignment:
+                                                                            Alignment.center,
+                                                                        fit: BoxFit
+                                                                            .cover,
+                                                                        placeholder:
+                                                                            (context, url) =>
+                                                                                const CircularProgressIndicator(),
+                                                                        errorWidget: (context,
+                                                                                url,
+                                                                                error) =>
+                                                                            Image.asset(
+                                                                          profile2,
+                                                                          height:
+                                                                              size.height / 4,
+                                                                          width:
+                                                                              size.height / 4,
+                                                                          fit: BoxFit
+                                                                              .cover,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        SizedBox(
+                                                          height:
+                                                              size.height / 90,
+                                                        ),
+                                                        Divider(
+                                                            thickness:
+                                                                size.height /
+                                                                    400),
+                                                      ],
+                                                    );
+                                                  },
+                                                ),
                                         ),
                                       ],
                                     );
@@ -444,15 +489,24 @@ class _GroupProfileScreenState extends State<GroupProfileScreen> {
                           buildButton(
                             size: size,
                             color1: Colors.red,
-                            submit: () => showExitDialog(
-                              size,
-                              "Are you sure want to Exit Group?",
-                              "Exit Group",
-                              () async {
-                                _isLoading =
-                                    await Api.exitGroup(group, context);
-                              },
-                            ),
+                            submit: _isLoading
+                                ? () {}
+                                : () => showExitDialog(
+                                      size,
+                                      "Are you sure want to Exit Group?",
+                                      "Exit Group",
+                                      () async {
+                                        setState(() {
+                                          _isLoading = true;
+                                        });
+                                        await Api.exitGroup(group, context)
+                                            .then((value) {
+                                          _isLoading = value;
+                                          log("Is Loading: ${_isLoading.toString()}");
+                                          setState(() {});
+                                        });
+                                      },
+                                    ),
                             widget: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -487,15 +541,24 @@ class _GroupProfileScreenState extends State<GroupProfileScreen> {
                             buildButton(
                               size: size,
                               color1: Colors.red,
-                              submit: () => showExitDialog(
-                                size,
-                                "Are you sure want to Delete Group?",
-                                "Delete Group",
-                                () async {
-                                  _isLoading =
-                                      await Api.deleteGroup(group, context);
-                                },
-                              ),
+                              submit: _isLoading
+                                  ? () {}
+                                  : () => showExitDialog(
+                                        size,
+                                        "Are you sure want to Delete Group?",
+                                        "Delete Group",
+                                        () async {
+                                          setState(() {
+                                            _isLoading = true;
+                                          });
+                                          await Api.deleteGroup(group, context)
+                                              .then((value) {
+                                            _isLoading = value;
+                                            log("Is Loading: ${_isLoading.toString()}");
+                                            setState(() {});
+                                          });
+                                        },
+                                      ),
                               widget: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -533,12 +596,10 @@ class _GroupProfileScreenState extends State<GroupProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         onPressed: () => Navigator.of(context).pop(),
-        child: _isLoading
-            ? const CircularProgressIndicator()
-            : Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Theme.of(context).colorScheme.onBackground,
-              ),
+        child: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: Theme.of(context).colorScheme.onBackground,
+        ),
       ),
     );
   }
@@ -592,8 +653,12 @@ class _GroupProfileScreenState extends State<GroupProfileScreen> {
                     backgroundColor:
                         Theme.of(context).colorScheme.primary.withOpacity(0.6)),
                 onPressed: () {
+                  log("hello");
                   Navigator.of(context).pop();
-                  viewProfile();
+                  showDialog(
+                    context: context,
+                    builder: (context) => ShowProfileDialog(user: user),
+                  );
                 },
                 child: Text(
                   "View Profile",

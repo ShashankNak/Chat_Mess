@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_mess/apis/api.dart';
 import 'package:chat_mess/models/chat_user_model.dart';
 import 'package:chat_mess/models/group_msg_model.dart';
@@ -129,24 +130,12 @@ class _GroupMessageCardState extends State<GroupMessageCard> {
   }
 
   Widget showTime(BuildContext context, bool isDark, Size size, bool isMe) {
-    return Row(
-      children: [
-        if (widget.chat.read.isNotEmpty && isMe)
-          Icon(
-            Icons.done_all,
-            color: isDark ? Colors.white : Colors.blueAccent,
+    return Text(
+      timeGetter(widget.chat.sentTime, context),
+      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+            fontSize: size.height / 70,
+            color: Theme.of(context).colorScheme.onBackground,
           ),
-        SizedBox(
-          width: size.width / 60,
-        ),
-        Text(
-          timeGetter(widget.chat.sentTime, context),
-          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                fontSize: size.height / 70,
-                color: Theme.of(context).colorScheme.onBackground,
-              ),
-        )
-      ],
     );
   }
 
@@ -191,50 +180,108 @@ class _GroupMessageCardState extends State<GroupMessageCard> {
           // Set some reasonable constraints on the width of the
           // message bubble so it can adjust to the amount of text
           // it should show.
-          constraints: const BoxConstraints(maxWidth: 200),
-          padding: const EdgeInsets.symmetric(
-            vertical: 10,
-            horizontal: 14,
+          constraints: BoxConstraints(maxWidth: size.width / 1.6),
+          padding: EdgeInsets.symmetric(
+            vertical: size.height / 100,
+            horizontal: size.width / 40,
           ),
           // Margin around the bubble.
           margin: const EdgeInsets.symmetric(
             vertical: 4,
             horizontal: 12,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!isMe)
-                Text(
-                  widget.user.name,
-                  style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                        fontWeight: FontWeight.w400,
-                        fontSize: size.width / 40,
-                        color: Theme.of(context).colorScheme.onBackground,
+          child: widget.chat.type == TypeG.text
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!isMe)
+                      Text(
+                        widget.user.name,
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelMedium!
+                            .copyWith(
+                              fontWeight: FontWeight.w400,
+                              fontSize: size.width / 40,
+                              color: Theme.of(context).colorScheme.onBackground,
+                            ),
+                        softWrap: true,
                       ),
-                  softWrap: true,
+                    Text(
+                      widget.chat.text,
+                      style: TextStyle(
+                          // Add a little line spacing to make the text look nicer
+                          // when multilined.
+                          fontWeight: FontWeight.w600,
+                          height: 1.3,
+                          color: Theme.of(context).colorScheme.onBackground),
+                      softWrap: true,
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!isMe)
+                      Text(
+                        widget.user.name,
+                        textAlign: TextAlign.start,
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelMedium!
+                            .copyWith(
+                              fontWeight: FontWeight.w400,
+                              fontSize: size.width / 40,
+                              color: Theme.of(context).colorScheme.onBackground,
+                            ),
+                        softWrap: true,
+                      ),
+                    if (!isMe)
+                      SizedBox(
+                        height: size.height / 60,
+                      ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(size.height / 90),
+                      child: CachedNetworkImage(
+                          imageUrl: widget.chat.chatImage,
+                          height: size.height / 4,
+                          width: size.width / 1.1,
+                          alignment: Alignment.center,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                                margin: EdgeInsets.only(right: size.width / 70),
+                                padding: EdgeInsets.all(size.width / 30),
+                                width: size.width / 8,
+                                child: CircularProgressIndicator(
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                ),
+                              ),
+                          errorWidget: (context, url, error) => CircleAvatar(
+                                child: Icon(
+                                  Icons.image,
+                                  size: size.width / 1.2,
+                                ),
+                              )),
+                    ),
+                    if (widget.chat.text != "")
+                      SizedBox(
+                        height: size.height / 80,
+                      ),
+                    if (widget.chat.text != "")
+                      Text(
+                        widget.chat.text,
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            color: Theme.of(context).colorScheme.onBackground,
+                            fontWeight: FontWeight.w600,
+                            fontSize: size.width / 25),
+                        softWrap: true,
+                      )
+                  ],
                 ),
-              Text(
-                widget.chat.text,
-                style: TextStyle(
-                    // Add a little line spacing to make the text look nicer
-                    // when multilined.
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
-                    color: Theme.of(context).colorScheme.onBackground),
-                softWrap: true,
-              ),
-            ],
-          ),
         ),
-        // Text(
-        //   msg.text,
-        //   style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-        //         fontSize: size.height / 40,
-        //         color: Theme.of(context).colorScheme.onBackground,
-        //       ),
-        // )
       ],
     );
   }

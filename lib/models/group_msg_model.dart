@@ -3,16 +3,18 @@ class GroupMessageModel {
   late String groupId;
   late String fromId;
   late String sentTime;
+  late String chatImage;
+  late TypeG type;
   late Map<String, dynamic> deleteChat;
-  late Map<String, dynamic> read;
 
   GroupMessageModel({
     required this.text,
     required this.groupId,
     required this.fromId,
     required this.sentTime,
+    required this.chatImage,
+    required this.type,
     required this.deleteChat,
-    required this.read,
   });
 
   factory GroupMessageModel.fromJson(Map<String, dynamic> map) {
@@ -21,8 +23,11 @@ class GroupMessageModel {
       groupId: map['groupId'] ?? "",
       fromId: map['fromId'] ?? "",
       deleteChat: map['deleteChat'] ?? {},
-      read: map['read'] ?? {},
       sentTime: map['sentTime'] ?? "",
+      chatImage: map["chatImage"] ?? "",
+      type: (map["type"] == null) || (map["type"] == TypeG.text.toString())
+          ? TypeG.text
+          : TypeG.image,
     );
   }
 
@@ -32,8 +37,11 @@ class GroupMessageModel {
       'groupId': groupId,
       'fromId': fromId,
       'deleteChat': deleteChat,
-      'read': read,
       'sentTime': sentTime,
+      'chatImage': chatImage,
+      'type': type.toString(),
     };
   }
 }
+
+enum TypeG { text, image }
